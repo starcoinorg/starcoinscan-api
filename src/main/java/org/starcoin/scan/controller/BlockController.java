@@ -18,4 +18,9 @@ public class BlockController {
     public Block getBlock(@RequestParam String id) throws Exception {
         return blockService.getBlock(id);
     }
+
+    @GetMapping("/get_block_by_height")
+    public Block getBlockByHeight(@RequestParam long height) throws Exception {
+        return blockService.getBlockByHeight(height);
+    }
 }
