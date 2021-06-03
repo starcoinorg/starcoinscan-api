@@ -18,6 +18,11 @@ public class BlockController {
         return blockService.getBlock(network, id);
     }
 
+    @GetMapping("/{network}/hash/{hash}")
+    public Block getBlockByHash(@PathVariable("network") String network, @PathVariable("hash") String hash) throws Exception {
+        return blockService.getBlockByHash(network, hash);
+    }
+
     @GetMapping("/{network}/{height}")
     public Block getBlockByHeight(@PathVariable("network") String network, @PathVariable("height") long height) throws Exception {
         return blockService.getBlockByHeight(network, height);
