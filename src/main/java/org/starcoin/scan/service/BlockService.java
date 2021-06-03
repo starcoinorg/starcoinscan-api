@@ -43,10 +43,26 @@ public class BlockService {
         return block;
     }
 
+    public Block getBlockByHash(String network, String hash) throws IOException {
+        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.BLOCK_INDEX));
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("header.block_hash", hash);
+        searchSourceBuilder.query(termQueryBuilder);
+        searchRequest.source(searchSourceBuilder);
+        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        List<Block> result = getSearchResult(searchResponse);
+        if (result.size() == 1) {
+            return result.get(0);
+        } else {
+            logger.warn("get block by height is null");
+        }
+        return null;
+    }
+
     public Block getBlockByHeight(String network, long height) throws IOException {
         SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.BLOCK_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("header.number", height);
+        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("metadata.number", height);
         searchSourceBuilder.query(termQueryBuilder);
         searchRequest.source(searchSourceBuilder);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
