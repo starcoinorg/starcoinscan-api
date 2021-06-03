@@ -11,15 +11,14 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.starcoin.scan.bean.Block;
-import org.starcoin.scan.bean.Transaction;
 import org.starcoin.scan.constant.Constant;
 
-import javax.naming.directory.SearchResult;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,23 +51,38 @@ public class BlockService {
         searchRequest.source(searchSourceBuilder);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
         List<Block> result = getSearchResult(searchResponse);
-        if (result.size() ==1) {
+        if (result.size() == 1) {
             return result.get(0);
-        }else {
+        } else {
             logger.warn("get block by height is null");
         }
         return null;
     }
 
-    public List<Block> getRange(int page , int count){
-        return null;
-    }
-        private List<Block> getSearchResult(SearchResponse searchResponse) {
-            SearchHit[] searchHit = searchResponse.getHits().getHits();
-            List<Block> blocks = new ArrayList<>();
-            for (SearchHit hit : searchHit) {
-                blocks.add(JSON.parseObject(hit.getSourceAsString(), Block.class));
-            }
-            return blocks;
+    public List<Block> getRange(int page, int count) throws IOException {
+        SearchRequest searchRequest = new SearchRequest(Constant.BLOCK_INDEX);
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+        //page size
+        searchSourceBuilder.size(count);
+        //begin offset
+        int offset = 0;
+        if (page > 1) {
+            offset = (page - 1) * count;
         }
+        searchSourceBuilder.from(offset);
+        searchSourceBuilder.sort("header.number", SortOrder.DESC);
+        searchRequest.source(searchSourceBuilder);
+        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        return getSearchResult(searchResponse);
+    }
+
+    private List<Block> getSearchResult(SearchResponse searchResponse) {
+        SearchHit[] searchHit = searchResponse.getHits().getHits();
+        List<Block> blocks = new ArrayList<>();
+        for (SearchHit hit : searchHit) {
+            blocks.add(JSON.parseObject(hit.getSourceAsString(), Block.class));
+        }
+        return blocks;
+    }
 }
