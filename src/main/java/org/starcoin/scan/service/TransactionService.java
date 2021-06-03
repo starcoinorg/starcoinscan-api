@@ -31,7 +31,6 @@ public class TransactionService {
     private RestHighLevelClient client;
 
     public Transaction get(String network,String id) throws IOException {
-        logger.info("transaction id is " + id);
         GetRequest getRequest = new GetRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_INDEX), id);
         GetResponse getResponse = client.get(getRequest, RequestOptions.DEFAULT);
         if (getResponse.isExists()) {
