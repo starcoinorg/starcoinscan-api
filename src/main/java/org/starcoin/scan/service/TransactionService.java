@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 import org.starcoin.scan.bean.Transaction;
 import org.starcoin.scan.constant.Constant;
 
@@ -25,13 +24,13 @@ public class TransactionService {
     private RestHighLevelClient client;
 
     public Transaction get(String id) throws IOException {
-        logger.info("transaction id is "+id);
+        logger.info("transaction id is " + id);
         GetRequest getRequest = new GetRequest(Constant.TRANSACTION_INDEX, id);
         GetResponse getResponse = client.get(getRequest, RequestOptions.DEFAULT);
         if (getResponse.isExists()) {
             String sourceAsString = getResponse.getSourceAsString();
             logger.info(sourceAsString);
-            Transaction transaction  = JSON.parseObject(sourceAsString, Transaction.class);
+            Transaction transaction = JSON.parseObject(sourceAsString, Transaction.class);
             return transaction;
         } else {
             logger.error("not found id doc");
@@ -39,23 +38,23 @@ public class TransactionService {
         }
     }
 
-    public Map<String,Transaction> multiGet(List<String> ids){
+    public Map<String, Transaction> multiGet(List<String> ids) {
         return null;
     }
 
-    public List<Transaction> getRange(int page ,int count){
+    public List<Transaction> getRange(int page, int count) {
         return null;
     }
 
-    public List<Transaction> getRangeByAddress(String address,int page ,int count){
+    public List<Transaction> getRangeByAddress(String address, int page, int count) {
         return null;
     }
 
-    public List<Transaction> getByBlockHash(String blockHash){
+    public List<Transaction> getByBlockHash(String blockHash) {
         return null;
     }
 
-    public List<Transaction> getByBlockHeight(int blockHeight){
+    public List<Transaction> getByBlockHeight(int blockHeight) {
         return null;
     }
 }

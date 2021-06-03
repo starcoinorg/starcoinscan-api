@@ -9,13 +9,11 @@ import java.util.List;
 
 @JSONType(naming = PropertyNamingStrategy.SnakeCase)
 public class Block {
-    private BlockHeader header;
-
     @JSONField(name = "block_metadata")
     BlockMetadata blockMetadata;
-
     @JSONField(name = "uncles")
     List<BlockHeader> uncles;
+    private BlockHeader header;
 
     public List<BlockHeader> getUncles() {
         return uncles;

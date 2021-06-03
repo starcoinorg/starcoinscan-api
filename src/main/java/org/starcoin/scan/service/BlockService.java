@@ -30,8 +30,8 @@ public class BlockService {
     @Autowired
     private RestHighLevelClient client;
 
-    public Block getBlock(String id) throws IOException {
-        GetRequest getRequest = new GetRequest(Constant.BLOCK_INDEX, id);
+    public Block getBlock(String network, String id) throws IOException {
+        GetRequest getRequest = new GetRequest(ServiceUtils.getIndex(network, Constant.BLOCK_INDEX), id);
         GetResponse getResponse = client.get(getRequest, RequestOptions.DEFAULT);
         Block block = new Block();
         if (getResponse.isExists()) {
@@ -43,8 +43,8 @@ public class BlockService {
         return block;
     }
 
-    public Block getBlockByHeight(long height) throws IOException {
-        SearchRequest searchRequest = new SearchRequest(Constant.BLOCK_INDEX);
+    public Block getBlockByHeight(String network, long height) throws IOException {
+        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.BLOCK_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("header.number", height);
         searchSourceBuilder.query(termQueryBuilder);
@@ -59,8 +59,8 @@ public class BlockService {
         return null;
     }
 
-    public List<Block> getRange(int page, int count) throws IOException {
-        SearchRequest searchRequest = new SearchRequest(Constant.BLOCK_INDEX);
+    public List<Block> getRange(String network, int page, int count) throws IOException {
+        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.BLOCK_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.matchAllQuery());
         //page size

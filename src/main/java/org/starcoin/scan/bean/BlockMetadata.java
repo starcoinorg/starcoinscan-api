@@ -10,14 +10,14 @@ public class BlockMetadata {
 
     String author;
 
-    @JSONField(name =  "author_auth_key")
+    @JSONField(name = "author_auth_key")
     String authorAuthKey;
 
     String uncles;
 
     String number;
 
-    @JSONField(name="chain_id")
+    @JSONField(name = "chain_id")
     String chainId;
 
     @JSONField(name = "parent_gas_used")

@@ -9,7 +9,7 @@ public class Event {
     @JSONField(name = "block_number")
     String blockNumber;
 
-    @JSONField(name ="transaction_hash")
+    @JSONField(name = "transaction_hash")
     String transactionHash;
 
     @JSONField(name = "transaction_index")
