@@ -30,8 +30,7 @@ public class TransactionService {
         if (getResponse.isExists()) {
             String sourceAsString = getResponse.getSourceAsString();
             logger.info(sourceAsString);
-            Transaction transaction = JSON.parseObject(sourceAsString, Transaction.class);
-            return transaction;
+            return JSON.parseObject(sourceAsString, Transaction.class);
         } else {
             logger.error("not found id doc");
             return null;
