@@ -25,7 +25,7 @@ class ElasticsearchConfiguration {
     @Value("${elasticsearch.username}")
     private String userName;
 
-    @Value("${elasticsearch.password}")
+    @Value("${jasypt.encryptor.password}")
     private String password;
 
     @Value("${elasticsearch.connTimeout}")
@@ -43,14 +43,8 @@ class ElasticsearchConfiguration {
         credentialsProvider.setCredentials(AuthScope.ANY,
                 new UsernamePasswordCredentials(userName, password));
         RestClientBuilder builder = RestClient.builder(new HttpHost(host, port))
-                .setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
-                    @Override
-                    public HttpAsyncClientBuilder customizeHttpClient(
-                            HttpAsyncClientBuilder httpClientBuilder) {
-                        return httpClientBuilder
-                                .setDefaultCredentialsProvider(credentialsProvider);
-                    }
-                });
+                .setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder
+                        .setDefaultCredentialsProvider(credentialsProvider));
         return new RestHighLevelClient(builder);
     }
 }
