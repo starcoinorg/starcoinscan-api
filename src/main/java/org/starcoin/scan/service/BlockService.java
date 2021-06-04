@@ -26,6 +26,7 @@ import java.util.List;
 @Service
 public class BlockService {
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
+    private static final int ELASTICSEARCH_MAX_HITS = 10000;
 
     @Autowired
     private RestHighLevelClient client;
@@ -75,7 +76,7 @@ public class BlockService {
         return null;
     }
 
-    public List<Block> getRange(String network, int page, int count) throws IOException {
+    public List<Block> getRange(String network, int page, int count, int start_height) throws IOException {
         SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.BLOCK_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.matchAllQuery());
@@ -85,8 +86,13 @@ public class BlockService {
         int offset = 0;
         if (page > 1) {
             offset = (page - 1) * count;
+            if (offset >= ELASTICSEARCH_MAX_HITS && start_height > 0) {
+                offset = start_height - (page - 1) * count;
+                searchSourceBuilder.searchAfter(new Object[]{offset});
+            }else {
+                searchSourceBuilder.from(offset);
+            }
         }
-        searchSourceBuilder.from(offset);
         searchSourceBuilder.sort("header.number", SortOrder.DESC);
         searchRequest.source(searchSourceBuilder);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);

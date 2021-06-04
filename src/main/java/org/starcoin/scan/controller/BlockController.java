@@ -30,7 +30,8 @@ public class BlockController {
 
     @GetMapping("/{network}/page/{page}")
     public List<Block> getRangeBlocks(@PathVariable("network") String network, @PathVariable("page") int page,
-                                      @RequestParam(value = "count", required = false, defaultValue = "20") int count) throws Exception {
-        return blockService.getRange(network, page, count);
+                                      @RequestParam(value = "count", required = false, defaultValue = "20") int count,
+                                      @RequestParam(value = "total", required = false, defaultValue = "0") int start_height) throws Exception {
+        return blockService.getRange(network, page, count, start_height);
     }
 }
