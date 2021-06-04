@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.List;
 
 @RestController
-@RequestMapping("/transaction")
+@RequestMapping("v1/transaction")
 public class TransactionController {
     @Autowired
     private TransactionService transactionService;
@@ -21,8 +21,9 @@ public class TransactionController {
 
     @GetMapping("list/{network}/{page}")
     public List<Transaction> getRangeTransactions(@PathVariable("network") String network, @PathVariable("page") int page,
-                                      @RequestParam(value = "count", required = false, defaultValue = "20") int count) throws Exception {
-        return transactionService.getRange(network, page, count);
+                                      @RequestParam(value = "count", required = false, defaultValue = "20") int count,
+                                                  @RequestParam(value = "after", required = false, defaultValue = "0") int start_height) throws Exception {
+        return transactionService.getRange(network, page, count,start_height);
     }
 
     @GetMapping("address/{network}/{address}/{page}")

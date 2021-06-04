@@ -23,6 +23,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.starcoin.scan.service.ServiceUtils.ELASTICSEARCH_MAX_HITS;
+
+
 @Service
 public class TransactionService {
     private static final Logger logger = LoggerFactory.getLogger(TransactionService.class);
@@ -42,7 +45,7 @@ public class TransactionService {
         }
     }
 
-    public List<Transaction> getRange(String network,int page, int count) throws IOException {
+    public List<Transaction> getRange(String network,int page, int count,int start_height) throws IOException {
         SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.matchAllQuery());
@@ -52,6 +55,12 @@ public class TransactionService {
         int offset = 0;
         if (page > 1) {
             offset = (page - 1) * count;
+            if (offset >= ELASTICSEARCH_MAX_HITS && start_height > 0) {
+                offset = start_height - (page - 1) * count;
+                searchSourceBuilder.searchAfter(new Object[]{offset});
+            }else {
+                searchSourceBuilder.from(offset);
+            }
         }
         searchSourceBuilder.from(offset);
         searchSourceBuilder.sort("timestamp", SortOrder.DESC);

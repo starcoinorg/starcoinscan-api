@@ -23,10 +23,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.starcoin.scan.service.ServiceUtils.ELASTICSEARCH_MAX_HITS;
+
 @Service
 public class BlockService {
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
-    private static final int ELASTICSEARCH_MAX_HITS = 10000;
 
     @Autowired
     private RestHighLevelClient client;

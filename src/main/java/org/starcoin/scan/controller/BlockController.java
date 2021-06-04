@@ -8,7 +8,7 @@ import org.starcoin.scan.service.BlockService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/block")
+@RequestMapping("v1/block")
 public class BlockController {
     @Autowired
     private BlockService blockService;
