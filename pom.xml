@@ -62,7 +62,9 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <skip>true</skip>
+                    <mainClass>org.starcoin.scan.ScanApplication</mainClass>
+                    <layout>JAR</layout>
+                    <executable>true</executable>
                 </configuration>
             </plugin>
         </plugins>
