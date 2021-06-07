@@ -14,6 +14,7 @@ public class Block {
     @JSONField(name = "uncles")
     List<BlockHeader> uncles;
     private BlockHeader header;
+    private BlockBody body;
 
     public List<BlockHeader> getUncles() {
         return uncles;
@@ -40,4 +41,11 @@ public class Block {
         this.header = header;
     }
 
+    public BlockBody getBody() {
+        return body;
+    }
+
+    public void setBody(BlockBody body) {
+        this.body = body;
+    }
 }

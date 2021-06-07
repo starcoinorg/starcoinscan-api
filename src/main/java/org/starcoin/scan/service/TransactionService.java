@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.starcoin.scan.bean.Block;
 import org.starcoin.scan.bean.Transaction;
 import org.starcoin.scan.constant.Constant;
 
@@ -45,7 +46,7 @@ public class TransactionService {
         }
     }
 
-    public List<Transaction> getRange(String network,int page, int count,int start_height) throws IOException {
+    public Result<Transaction> getRange(String network,int page, int count,int start_height) throws IOException {
         SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.matchAllQuery());
@@ -69,7 +70,7 @@ public class TransactionService {
         return getSearchResult(searchResponse);
     }
 
-    public List<Transaction> getRangeByAddress(String network,String address, int page, int count) throws IOException {
+    public Result<Transaction> getRangeByAddress(String network,String address, int page, int count) throws IOException {
         SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.size(count);
@@ -85,11 +86,10 @@ public class TransactionService {
         searchSourceBuilder.query(termQueryBuilder);
         searchRequest.source(searchSourceBuilder);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-        List<Transaction> result = getSearchResult(searchResponse);
-        return result;
+        return getSearchResult(searchResponse);
     }
 
-    public List<Transaction> getByBlockHash(String network,String blockHash) throws IOException {
+    public Result<Transaction> getByBlockHash(String network,String blockHash) throws IOException {
         SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 
@@ -98,11 +98,10 @@ public class TransactionService {
         searchSourceBuilder.query(termQueryBuilder);
         searchRequest.source(searchSourceBuilder);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-        List<Transaction> result = getSearchResult(searchResponse);
-        return result;
+        return getSearchResult(searchResponse);
     }
 
-    public List<Transaction> getByBlockHeight(String network,int blockHeight) throws IOException {
+    public Result<Transaction> getByBlockHeight(String network,int blockHeight) throws IOException {
         SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 
@@ -111,17 +110,19 @@ public class TransactionService {
         searchSourceBuilder.query(termQueryBuilder);
         searchRequest.source(searchSourceBuilder);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-        List<Transaction> result = getSearchResult(searchResponse);
-        return result;
+        return getSearchResult(searchResponse);
     }
 
-    private List<Transaction> getSearchResult(SearchResponse searchResponse) {
+    private Result<Transaction> getSearchResult(SearchResponse searchResponse) {
         SearchHit[] searchHit = searchResponse.getHits().getHits();
+        Result<Transaction> result = new Result<>();
+        result.setTotal(searchResponse.getHits().getTotalHits().value);
         List<Transaction> transactions = new ArrayList<>();
         for (SearchHit hit : searchHit) {
             transactions.add(JSON.parseObject(hit.getSourceAsString(), Transaction.class));
         }
-        return transactions;
+        result.setContents(transactions);
+        return result;
     }
 
 }

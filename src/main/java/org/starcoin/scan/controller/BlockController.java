@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.starcoin.scan.bean.Block;
 import org.starcoin.scan.service.BlockService;
+import org.starcoin.scan.service.Result;
 
 import java.util.List;
 
@@ -30,9 +31,9 @@ public class BlockController {
     }
 
     @GetMapping("/{network}/page/{page}")
-    public List<Block> getRangeBlocks(@PathVariable("network") String network, @PathVariable("page") int page,
-                                      @RequestParam(value = "count", required = false, defaultValue = "20") int count,
-                                      @RequestParam(value = "total", required = false, defaultValue = "0") int start_height) throws Exception {
+    public Result<Block> getRangeBlocks(@PathVariable("network") String network, @PathVariable("page") int page,
+                                        @RequestParam(value = "count", required = false, defaultValue = "20") int count,
+                                        @RequestParam(value = "total", required = false, defaultValue = "0") int start_height) throws Exception {
         return blockService.getRange(network, page, count, start_height);
     }
 }

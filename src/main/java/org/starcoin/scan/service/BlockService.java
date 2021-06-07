@@ -52,9 +52,10 @@ public class BlockService {
         searchSourceBuilder.query(termQueryBuilder);
         searchRequest.source(searchSourceBuilder);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-        List<Block> result = getSearchResult(searchResponse);
-        if (result.size() == 1) {
-            return result.get(0);
+        Result<Block> result = getSearchResult(searchResponse);
+        List<Block> blocks = result.getContents();
+        if (blocks.size() == 1) {
+            return blocks.get(0);
         } else {
             logger.warn("get block by height is null");
         }
@@ -68,16 +69,17 @@ public class BlockService {
         searchSourceBuilder.query(termQueryBuilder);
         searchRequest.source(searchSourceBuilder);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-        List<Block> result = getSearchResult(searchResponse);
-        if (result.size() == 1) {
-            return result.get(0);
+        Result<Block> result = getSearchResult(searchResponse);
+        List<Block> blocks = result.getContents();
+        if (blocks.size() == 1) {
+            return blocks.get(0);
         } else {
             logger.warn("get block by height is null");
         }
         return null;
     }
 
-    public List<Block> getRange(String network, int page, int count, int start_height) throws IOException {
+    public Result<Block> getRange(String network, int page, int count, int start_height) throws IOException {
         SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.BLOCK_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.matchAllQuery());
@@ -100,12 +102,15 @@ public class BlockService {
         return getSearchResult(searchResponse);
     }
 
-    private List<Block> getSearchResult(SearchResponse searchResponse) {
+    private Result<Block> getSearchResult(SearchResponse searchResponse) {
         SearchHit[] searchHit = searchResponse.getHits().getHits();
+        Result<Block> result = new Result<>();
+        result.setTotal(searchResponse.getHits().getTotalHits().value);
         List<Block> blocks = new ArrayList<>();
         for (SearchHit hit : searchHit) {
             blocks.add(JSON.parseObject(hit.getSourceAsString(), Block.class));
         }
-        return blocks;
+        result.setContents(blocks);
+        return result;
     }
 }
