@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.List;
 
 @RestController
+@CrossOrigin
 @RequestMapping("v1/transaction")
 public class TransactionController {
     @Autowired
