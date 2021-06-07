@@ -9,7 +9,6 @@ import org.starcoin.scan.service.Result;
 import java.util.List;
 
 @RestController
-@CrossOrigin
 @RequestMapping("v1/block")
 public class BlockController {
     @Autowired
@@ -25,7 +24,7 @@ public class BlockController {
         return blockService.getBlockByHash(network, hash);
     }
 
-    @GetMapping("/{network}/{height}")
+    @GetMapping("/{network}/height/{height}")
     public Block getBlockByHeight(@PathVariable("network") String network, @PathVariable("height") long height) throws Exception {
         return blockService.getBlockByHeight(network, height);
     }

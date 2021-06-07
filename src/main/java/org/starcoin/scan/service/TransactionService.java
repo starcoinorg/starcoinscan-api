@@ -46,6 +46,10 @@ public class TransactionService {
         }
     }
 
+    public Transaction getTransactionByHash(String network, String hash) throws IOException {
+       return get(network,hash);
+    }
+
     public Result<Transaction> getRange(String network,int page, int count,int start_height) throws IOException {
         SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
