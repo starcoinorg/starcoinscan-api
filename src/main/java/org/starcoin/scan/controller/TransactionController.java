@@ -32,8 +32,14 @@ public class TransactionController {
         return transactionService.getRange(network, page, count,start_height);
     }
 
+    @GetMapping("/{network}/byAddress/{address}")
+    public Result<Transaction> getRangeByAddressAlias(@PathVariable("network") String network,@PathVariable("address") String address,
+                                                 @RequestParam(value = "count", required = false, defaultValue = "20") int count) throws IOException {
+        return transactionService.getRangeByAddress(network,address,1,count);
+    }
+
     @GetMapping("/address/{network}/{address}/page/{page}")
-    public Result<Transaction> getRangeByAddress(@PathVariable("network") String network,@PathVariable("address") String address, @PathVariable("page") int page,
+    public Result<Transaction> getRangeByAddress(@PathVariable("network") String network,@PathVariable("address") String address, @PathVariable(value = "page", required = false) int page,
                                                @RequestParam(value = "count", required = false, defaultValue = "20") int count) throws IOException {
         return transactionService.getRangeByAddress(network,address,page,count);
     }
