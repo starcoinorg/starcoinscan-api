@@ -66,6 +66,7 @@ public class TransactionService {
         searchSourceBuilder.from(offset);
         searchSourceBuilder.sort("timestamp", SortOrder.DESC);
         searchRequest.source(searchSourceBuilder);
+        searchSourceBuilder.trackTotalHits(true);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
         return getSearchResult(searchResponse);
     }
@@ -85,6 +86,7 @@ public class TransactionService {
 
         searchSourceBuilder.query(termQueryBuilder);
         searchRequest.source(searchSourceBuilder);
+        searchSourceBuilder.trackTotalHits(true);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
         return getSearchResult(searchResponse);
     }
@@ -97,6 +99,7 @@ public class TransactionService {
 
         searchSourceBuilder.query(termQueryBuilder);
         searchRequest.source(searchSourceBuilder);
+        searchSourceBuilder.trackTotalHits(true);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
         return getSearchResult(searchResponse);
     }
@@ -109,6 +112,7 @@ public class TransactionService {
 
         searchSourceBuilder.query(termQueryBuilder);
         searchRequest.source(searchSourceBuilder);
+        searchSourceBuilder.trackTotalHits(true);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
         return getSearchResult(searchResponse);
     }

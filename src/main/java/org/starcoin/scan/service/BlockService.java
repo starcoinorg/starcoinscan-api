@@ -97,6 +97,7 @@ public class BlockService {
             }
         }
         searchSourceBuilder.sort("header.number", SortOrder.DESC);
+        searchSourceBuilder.trackTotalHits(true);
         searchRequest.source(searchSourceBuilder);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
         return getSearchResult(searchResponse);
