@@ -48,6 +48,11 @@ public class TransactionController {
         return  transactionService.getByBlockHash(network,blockHash);
     }
 
+    @GetMapping("/{network}/byBlock/{block_hash}")
+    public Result<Transaction> getByBlockHashAlias(@PathVariable("network") String network,@PathVariable("block_hash") String  blockHash) throws IOException {
+        return  transactionService.getByBlockHash(network,blockHash);
+    }
+
     @GetMapping("/{network}/byBlockHeight/{block_height}")
     public Result<Transaction> getByBlockHeight(@PathVariable("network") String network, @PathVariable("block_height") int blockHeight) throws IOException {
         return transactionService.getByBlockHeight(network,blockHeight);

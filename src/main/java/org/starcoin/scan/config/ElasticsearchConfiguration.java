@@ -21,6 +21,9 @@ class ElasticsearchConfiguration {
     @Value("${elasticsearch.port}")
     private int port;
 
+    @Value("${elasticsearch.protocol}")
+    private String protocol;
+
     @Value("${elasticsearch.username}")
     private String userName;
 
@@ -41,7 +44,7 @@ class ElasticsearchConfiguration {
         final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(AuthScope.ANY,
                 new UsernamePasswordCredentials(userName, password));
-        RestClientBuilder builder = RestClient.builder(new HttpHost(host, port))
+        RestClientBuilder builder = RestClient.builder(new HttpHost(host, port, protocol))
                 .setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder
                         .setDefaultCredentialsProvider(credentialsProvider))
                 .setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder
