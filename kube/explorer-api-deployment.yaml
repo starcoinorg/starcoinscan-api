@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: explorer-new-api
-          image: starcoin/starcoin_scan:sha-6ba2577
+          image: starcoin/starcoin_scan:sha-0b4138d
           ports:
             - containerPort: 8500
           env:
@@ -24,7 +24,7 @@ spec:
               value: "search-starcoin-es2-47avtmhexhbg7qtynzebcnnu64.ap-northeast-1.es.amazonaws.com"
             - name: STARCOIN_ES_USER
               value: elastic
-            - name: STARCOIN_ES_USER
+            - name: STARCOIN_ES_PWD
               valueFrom:
                 secretKeyRef:
                   name: elasticsearch-pw-elastic
