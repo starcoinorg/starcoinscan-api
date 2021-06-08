@@ -43,7 +43,7 @@ public class TransactionController {
         return transactionService.getRangeByAddress(network,address,page,count);
     }
 
-    @GetMapping("/block_hash/{network}/page/{block_hash}")
+    @GetMapping("/{network}/byBlock/{block_hash}")
     public Result<Transaction> getByBlockHash(@PathVariable("network") String network,@PathVariable("block_hash") String  blockHash) throws IOException {
         return  transactionService.getByBlockHash(network,blockHash);
     }
