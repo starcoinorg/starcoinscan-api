@@ -30,6 +30,9 @@ public class Transaction {
 
     long timestamp;
 
+    @JSONField(name = "user_transaction")
+    UserTransaction userTransaction;
+
     @JSONField(name = "block_metadata")
     BlockMetadata blockMetadata;
 
@@ -121,5 +124,13 @@ public class Transaction {
 
     public void setEvents(List<Event> events) {
         this.events = events;
+    }
+
+    public UserTransaction getUserTransaction() {
+        return userTransaction;
+    }
+
+    public void setUserTransaction(UserTransaction userTransaction) {
+        this.userTransaction = userTransaction;
     }
 }
