@@ -5,7 +5,6 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -44,7 +43,11 @@ class ElasticsearchConfiguration {
                 new UsernamePasswordCredentials(userName, password));
         RestClientBuilder builder = RestClient.builder(new HttpHost(host, port))
                 .setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder
-                        .setDefaultCredentialsProvider(credentialsProvider));
+                        .setDefaultCredentialsProvider(credentialsProvider))
+                .setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder
+                        .setConnectTimeout(connTimeout)
+                        .setSocketTimeout(socketTimeout)
+                        .setConnectionRequestTimeout(connectionRequestTimeout));
         return new RestHighLevelClient(builder);
     }
 }
