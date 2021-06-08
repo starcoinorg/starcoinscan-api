@@ -39,7 +39,6 @@ public class TransactionService {
         GetResponse getResponse = client.get(getRequest, RequestOptions.DEFAULT);
         if (getResponse.isExists()) {
             String sourceAsString = getResponse.getSourceAsString();
-            logger.info(sourceAsString);
             return JSON.parseObject(sourceAsString, Transaction.class);
         } else {
             logger.error("not found transaction, id: {}", id);
