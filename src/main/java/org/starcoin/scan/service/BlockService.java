@@ -40,7 +40,7 @@ public class BlockService {
             String sourceAsString = getResponse.getSourceAsString();
             block = JSON.parseObject(sourceAsString, Block.class);
         } else {
-            logger.error("not found block by id.");
+            logger.error("not found block by id: {}", id);
         }
         return block;
     }
@@ -57,7 +57,7 @@ public class BlockService {
         if (blocks.size() == 1) {
             return blocks.get(0);
         } else {
-            logger.warn("get block by height is null");
+            logger.warn("get block by hash is null, network: {}, : {}", network,hash);
         }
         return null;
     }
@@ -74,7 +74,7 @@ public class BlockService {
         if (blocks.size() == 1) {
             return blocks.get(0);
         } else {
-            logger.warn("get block by height is null");
+            logger.warn("get block by height is null, network: {}, : {}", network, height);
         }
         return null;
     }

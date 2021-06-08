@@ -9,11 +9,15 @@ COPY src src
 RUN --mount=type=cache,target=/root/.m2 ./mvnw install -DskipTests
 
 FROM openjdk:8-jdk-alpine
-ARG ES_PASSWORD
-ENV ES_PASSWORD=$ES_PASSWORD
+ARG STARCOIN_ES_URL
+ARG STARCOIN_ES_USER
+ARG STARCOIN_ES_PWD
+ENV STARCOIN_ES_URL=$STARCOIN_ES_URL
+ENV STARCOIN_ES_USER=$STARCOIN_ES_USER
+ENV STARCOIN_ES_PWD=$STARCOIN_ES_PWD
 RUN addgroup -S starcoin && adduser -S starcoin -G starcoin
 VOLUME /tmp
 USER starcoin
 ARG DEPENDENCY=/workspace/app/target
 COPY --from=build ${DEPENDENCY}/scan-1.0-SNAPSHOT.jar /app/lib/app.jar
-ENTRYPOINT ["java","-noverify","-XX:TieredStopAtLevel=1","-jar","app/lib/app.jar","-Dspring.main.lazy-initialization=true","ES_PASSWORD=$ES_PASSWORD"]
+ENTRYPOINT ["java","-noverify","-XX:TieredStopAtLevel=1","-jar","app/lib/app.jar","-Dspring.main.lazy-initialization=true","STARCOIN_ES_URL=$STARCOIN_ES_URL","STARCOIN_ES_USER=$STARCOIN_ES_USER","STARCOIN_ES_PWD=$STARCOIN_ES_PWD"]

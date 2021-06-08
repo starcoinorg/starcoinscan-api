@@ -41,7 +41,7 @@ public class TransactionService {
             String sourceAsString = getResponse.getSourceAsString();
             return JSON.parseObject(sourceAsString, Transaction.class);
         } else {
-            logger.error("not found id doc");
+            logger.error("not found transaction, id: {}", id);
             return null;
         }
     }
