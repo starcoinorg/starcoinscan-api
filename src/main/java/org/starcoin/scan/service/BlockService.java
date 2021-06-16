@@ -46,13 +46,19 @@ public class BlockService {
         return block;
     }
 
-    public Block getBlockByHash(String network, String hash) throws IOException {
+    public Block getBlockByHash(String network, String hash) {
         SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.BLOCK_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("header.block_hash", hash);
         searchSourceBuilder.query(termQueryBuilder);
         searchRequest.source(searchSourceBuilder);
-        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        SearchResponse searchResponse = null;
+        try {
+            searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+           logger.error("get block by hash error:", e);
+           return null;
+        }
         Result<Block> result = getSearchResult(searchResponse, Block.class);
         List<Block> blocks = result.getContents();
         if (blocks.size() == 1) {
@@ -63,13 +69,19 @@ public class BlockService {
         return null;
     }
 
-    public Block getBlockByHeight(String network, long height) throws IOException {
+    public Block getBlockByHeight(String network, long height) {
         SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.BLOCK_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("metadata.number", height);
         searchSourceBuilder.query(termQueryBuilder);
         searchRequest.source(searchSourceBuilder);
-        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        SearchResponse searchResponse = null;
+        try {
+            searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            logger.error("get block by height error:", e);
+            return null;
+        }
         Result<Block> result = getSearchResult(searchResponse, Block.class);
         List<Block> blocks = result.getContents();
         if (blocks.size() == 1) {
@@ -80,7 +92,7 @@ public class BlockService {
         return null;
     }
 
-    public Result<Block> getRange(String network, int page, int count, int start_height) throws IOException {
+    public Result<Block> getRange(String network, int page, int count, int start_height) {
         SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.BLOCK_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.matchAllQuery());
@@ -100,17 +112,29 @@ public class BlockService {
         searchSourceBuilder.sort("header.number", SortOrder.DESC);
         searchSourceBuilder.trackTotalHits(true);
         searchRequest.source(searchSourceBuilder);
-        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        SearchResponse searchResponse = null;
+        try {
+            searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            logger.error("get range block error:", e);
+            return null;
+        }
         return getSearchResult(searchResponse, Block.class);
     }
 
-    public UncleBlock getUncleBlockByHeight(String network, long height) throws IOException {
+    public UncleBlock getUncleBlockByHeight(String network, long height) {
         SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.UNCLE_BLOCK_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("header.number", height);
         searchSourceBuilder.query(termQueryBuilder);
         searchRequest.source(searchSourceBuilder);
-        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        SearchResponse searchResponse = null;
+        try {
+            searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            logger.error("get uncle block error:", e);
+            return null;
+        }
         Result<UncleBlock> result = getSearchResult(searchResponse, UncleBlock.class);
         List<UncleBlock> blocks = result.getContents();
         if (blocks.size() == 1) {
@@ -121,7 +145,7 @@ public class BlockService {
         return null;
     }
 
-    public Result<UncleBlock> getUnclesRange(String network, int page, int count, int start_height) throws IOException {
+    public Result<UncleBlock> getUnclesRange(String network, int page, int count, int start_height) {
         SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.UNCLE_BLOCK_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.matchAllQuery());
@@ -141,7 +165,13 @@ public class BlockService {
         searchSourceBuilder.sort("parent_block_number", SortOrder.DESC);
         searchSourceBuilder.trackTotalHits(true);
         searchRequest.source(searchSourceBuilder);
-        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        SearchResponse searchResponse = null;
+        try {
+            searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            logger.error("get uncle range error:", e);
+            return null;
+        }
         return getSearchResult(searchResponse, UncleBlock.class);
     }
 

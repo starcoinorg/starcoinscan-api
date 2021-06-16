@@ -21,31 +21,31 @@ public class BlockController {
     }
 
     @GetMapping("/{network}/hash/{hash}")
-    public Block getBlockByHash(@PathVariable("network") String network, @PathVariable("hash") String hash) throws Exception {
+    public Block getBlockByHash(@PathVariable("network") String network, @PathVariable("hash") String hash) {
         return blockService.getBlockByHash(network, hash);
     }
 
     @GetMapping("/{network}/height/{height}")
-    public Block getBlockByHeight(@PathVariable("network") String network, @PathVariable("height") long height) throws Exception {
+    public Block getBlockByHeight(@PathVariable("network") String network, @PathVariable("height") long height) {
         return blockService.getBlockByHeight(network, height);
     }
 
     @GetMapping("/{network}/page/{page}")
     public Result<Block> getRangeBlocks(@PathVariable("network") String network, @PathVariable("page") int page,
                                         @RequestParam(value = "count", required = false, defaultValue = "20") int count,
-                                        @RequestParam(value = "total", required = false, defaultValue = "0") int start_height) throws Exception {
+                                        @RequestParam(value = "total", required = false, defaultValue = "0") int start_height) {
         return blockService.getRange(network, page, count, start_height);
     }
 
     @GetMapping("/{network}/uncle/page/{page}")
     public Result<UncleBlock> getRangeUncleBlocks(@PathVariable("network") String network, @PathVariable("page") int page,
                                                   @RequestParam(value = "count", required = false, defaultValue = "20") int count,
-                                                  @RequestParam(value = "total", required = false, defaultValue = "0") int start_height) throws Exception {
+                                                  @RequestParam(value = "total", required = false, defaultValue = "0") int start_height) {
         return blockService.getUnclesRange(network, page, count, start_height);
     }
 
     @GetMapping("/{network}/uncle/height/{height}")
-    public UncleBlock getUncleBlockByHeight(@PathVariable("network") String network, @PathVariable("height") long height) throws Exception {
+    public UncleBlock getUncleBlockByHeight(@PathVariable("network") String network, @PathVariable("height") long height) {
         return blockService.getUncleBlockByHeight(network, height);
     }
 }
