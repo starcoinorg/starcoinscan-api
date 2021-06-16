@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.starcoin.scan.bean.Block;
+import org.starcoin.scan.bean.UncleBlock;
 import org.starcoin.scan.constant.Constant;
 
 import java.io.IOException;
@@ -52,7 +53,7 @@ public class BlockService {
         searchSourceBuilder.query(termQueryBuilder);
         searchRequest.source(searchSourceBuilder);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-        Result<Block> result = getSearchResult(searchResponse);
+        Result<Block> result = getSearchResult(searchResponse, Block.class);
         List<Block> blocks = result.getContents();
         if (blocks.size() == 1) {
             return blocks.get(0);
@@ -69,7 +70,7 @@ public class BlockService {
         searchSourceBuilder.query(termQueryBuilder);
         searchRequest.source(searchSourceBuilder);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-        Result<Block> result = getSearchResult(searchResponse);
+        Result<Block> result = getSearchResult(searchResponse, Block.class);
         List<Block> blocks = result.getContents();
         if (blocks.size() == 1) {
             return blocks.get(0);
@@ -100,18 +101,61 @@ public class BlockService {
         searchSourceBuilder.trackTotalHits(true);
         searchRequest.source(searchSourceBuilder);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-        return getSearchResult(searchResponse);
+        return getSearchResult(searchResponse, Block.class);
     }
 
-    private Result<Block> getSearchResult(SearchResponse searchResponse) {
+    public UncleBlock getUncleBlockByHeight(String network, long height) throws IOException {
+        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.UNCLE_BLOCK_INDEX));
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("header.number", height);
+        searchSourceBuilder.query(termQueryBuilder);
+        searchRequest.source(searchSourceBuilder);
+        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        Result<UncleBlock> result = getSearchResult(searchResponse, UncleBlock.class);
+        List<UncleBlock> blocks = result.getContents();
+        if (blocks.size() == 1) {
+            return blocks.get(0);
+        } else {
+            logger.warn("get uncle block by height is null, network: {}, : {}", network, height);
+        }
+        return null;
+    }
+
+    public Result<UncleBlock> getUnclesRange(String network, int page, int count, int start_height) throws IOException {
+        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.UNCLE_BLOCK_INDEX));
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+        //page size
+        searchSourceBuilder.size(count);
+        //begin offset
+        int offset = 0;
+        if (page > 1) {
+            offset = (page - 1) * count;
+            if (offset >= ELASTICSEARCH_MAX_HITS && start_height > 0) {
+                offset = start_height - (page - 1) * count;
+                searchSourceBuilder.searchAfter(new Object[]{offset});
+            }else {
+                searchSourceBuilder.from(offset);
+            }
+        }
+        searchSourceBuilder.sort("parent_block_number", SortOrder.DESC);
+        searchSourceBuilder.trackTotalHits(true);
+        searchRequest.source(searchSourceBuilder);
+        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        return getSearchResult(searchResponse, UncleBlock.class);
+    }
+
+    private <T> Result<T> getSearchResult(SearchResponse searchResponse, Class<T> object) {
         SearchHit[] searchHit = searchResponse.getHits().getHits();
-        Result<Block> result = new Result<>();
+        Result<T> result = new Result<>();
         result.setTotal(searchResponse.getHits().getTotalHits().value);
-        List<Block> blocks = new ArrayList<>();
+        List<T> blocks = new ArrayList<>();
         for (SearchHit hit : searchHit) {
-            blocks.add(JSON.parseObject(hit.getSourceAsString(), Block.class));
+            blocks.add(JSON.parseObject(hit.getSourceAsString(), object));
         }
         result.setContents(blocks);
         return result;
     }
+
+
 }
