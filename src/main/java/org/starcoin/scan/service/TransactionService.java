@@ -50,10 +50,13 @@ public class TransactionService {
        return get(network,hash);
     }
 
-    public Result<Transaction> getRange(String network,int page, int count,int start_height) throws IOException {
+    public Result<Transaction> getRange(String network,int page, int count,int start_height,int txnType) throws IOException {
         SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+        if(txnType==0)//
+            searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+        else
+            searchSourceBuilder.query(QueryBuilders.rangeQuery("transaction_index").gt(0));
         //page size
         searchSourceBuilder.size(count);
         //begin offset

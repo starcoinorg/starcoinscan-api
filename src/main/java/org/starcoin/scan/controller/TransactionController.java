@@ -27,8 +27,9 @@ public class TransactionController {
     @GetMapping("/list/{network}/page/{page}")
     public Result<Transaction> getRangeTransactions(@PathVariable("network") String network, @PathVariable("page") int page,
                                       @RequestParam(value = "count", required = false, defaultValue = "20") int count,
-                                                  @RequestParam(value = "after", required = false, defaultValue = "0") int start_height) throws Exception {
-        return transactionService.getRange(network, page, count,start_height);
+                                                  @RequestParam(value = "after", required = false, defaultValue = "0") int startHeight,
+                                                    @RequestParam(value = "txn_type", required = false, defaultValue = "0") int txnType) throws Exception {
+        return transactionService.getRange(network, page, count,startHeight,txnType);
     }
 
     @GetMapping("/{network}/byAddress/{address}")
