@@ -32,6 +32,18 @@ public class TransactionController {
         return transactionService.getRange(network, page, count,startHeight,txnType);
     }
 
+    @GetMapping("/pending_txns/{network}/page/{page}")
+    public Result<Transaction> getRangePendingTransactions(@PathVariable("network") String network, @PathVariable("page") int page,
+                                                    @RequestParam(value = "count", required = false, defaultValue = "20") int count,
+                                                    @RequestParam(value = "after", required = false, defaultValue = "0") int startHeight) throws Exception {
+        return transactionService.getRange(network, page, count,startHeight,0);
+    }
+
+    @GetMapping("/pending_txn/get/{network}/{id}")
+    public Transaction getPendingTransaction(@PathVariable("network") String network, @PathVariable("id") String id) throws IOException {
+        return transactionService.get(network,id);
+    }
+
     @GetMapping("/{network}/byAddress/{address}")
     public Result<Transaction> getRangeByAddressAlias(@PathVariable("network") String network,@PathVariable("address") String address,
                                                  @RequestParam(value = "count", required = false, defaultValue = "20") int count) throws IOException {
