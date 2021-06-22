@@ -6,7 +6,7 @@ metadata:
   name: explorer-new-api
 spec:
   ports:
-  - port: 80
+  - port: 8500
     name: http
     protocol: TCP
     targetPort: 8500

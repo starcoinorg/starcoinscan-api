@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: explorer-new-api
-          image: starcoin/starcoin_scan:sha-0b4138d
+          image: starcoin/starcoin_scan:feature-ali_deploy
           ports:
             - containerPort: 8500
           env:
