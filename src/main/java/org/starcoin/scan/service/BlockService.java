@@ -162,7 +162,7 @@ public class BlockService {
                 searchSourceBuilder.from(offset);
             }
         }
-        searchSourceBuilder.sort("parent_block_number", SortOrder.DESC);
+        searchSourceBuilder.sort("uncle_block_number", SortOrder.DESC);
         searchSourceBuilder.trackTotalHits(true);
         searchRequest.source(searchSourceBuilder);
         SearchResponse searchResponse = null;

@@ -8,7 +8,7 @@ import com.alibaba.fastjson.annotation.JSONType;
 @JSONType(naming = PropertyNamingStrategy.SnakeCase)
 public class UncleBlock {
     private BlockHeader header;
-    @JSONField(name = "parent_block_number")
+    @JSONField(name = "uncle_block_number")
     private long uncleBlockNumber;
 
     public BlockHeader getHeader() {
