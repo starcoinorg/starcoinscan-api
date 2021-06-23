@@ -7,6 +7,7 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.search.SearchHit;
@@ -16,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.starcoin.scan.bean.Event;
 import org.starcoin.scan.bean.Transaction;
 import org.starcoin.scan.constant.Constant;
 
@@ -74,7 +76,7 @@ public class TransactionService {
         searchRequest.source(searchSourceBuilder);
         searchSourceBuilder.trackTotalHits(true);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-        return getSearchResult(searchResponse);
+        return getSearchResult(searchResponse,Transaction.class);
     }
 
     public Result<Transaction> getRangeByAddress(String network,String address, int page, int count) throws IOException {
@@ -94,7 +96,56 @@ public class TransactionService {
         searchRequest.source(searchSourceBuilder);
         searchSourceBuilder.trackTotalHits(true);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-        return getSearchResult(searchResponse);
+        return getSearchResult(searchResponse,Transaction.class);
+    }
+
+    public Result<Event> getEventsByAddress(String network,String address, int page, int count) throws IOException {
+        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_EVENT_INDEX));
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.size(count);
+        //begin offset
+        int offset = 0;
+        if (page > 1) {
+            offset = (page - 1) * count;
+        }
+        searchSourceBuilder.from(offset);
+
+        BoolQueryBuilder exersiceBoolQuery = QueryBuilders.boolQuery();
+        exersiceBoolQuery.should(QueryBuilders.termQuery("type_tag", ServiceUtils.depositEvent));
+        exersiceBoolQuery.should(QueryBuilders.termQuery("type_tag", ServiceUtils.withdrawEvent));
+        exersiceBoolQuery.must(QueryBuilders.termQuery("event_address", address));
+
+        searchSourceBuilder.query(exersiceBoolQuery);
+        searchRequest.source(searchSourceBuilder);
+        searchSourceBuilder.trackTotalHits(true);
+        searchSourceBuilder.sort("timestamp", SortOrder.DESC);
+
+        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        Result<Event> events = getSearchResult(searchResponse,Event.class);
+        return events;
+    }
+
+    public Result<Transaction> getRangeByAddressAll(String network,String address, int page, int count) throws IOException {
+        Result<Event> events = getEventsByAddress(network,address,page,count);
+        if(events.getContents().size()==0){
+            return Result.EmptyResult;
+        }
+        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_INDEX));
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+
+        BoolQueryBuilder exersiceBoolQuery = QueryBuilders.boolQuery();
+        for (Event event:events.getContents())
+            exersiceBoolQuery.should(QueryBuilders.termQuery("transaction_hash", event.getTransactionHash()));
+
+        searchSourceBuilder.query(exersiceBoolQuery);
+        searchRequest.source(searchSourceBuilder);
+        searchSourceBuilder.trackTotalHits(true);
+
+        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        Result<Transaction> result = getSearchResult(searchResponse,Transaction.class);
+        result.setTotal(events.getTotal());
+
+        return result;
     }
 
     public Result<Transaction> getByBlockHash(String network,String blockHash) throws IOException {
@@ -107,7 +158,7 @@ public class TransactionService {
         searchRequest.source(searchSourceBuilder);
         searchSourceBuilder.trackTotalHits(true);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-        return getSearchResult(searchResponse);
+        return getSearchResult(searchResponse,Transaction.class);
     }
 
     public Result<Transaction> getByBlockHeight(String network,int blockHeight) throws IOException {
@@ -120,18 +171,27 @@ public class TransactionService {
         searchRequest.source(searchSourceBuilder);
         searchSourceBuilder.trackTotalHits(true);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-        return getSearchResult(searchResponse);
+        return getSearchResult(searchResponse,Transaction.class);
     }
 
-    private Result<Transaction> getSearchResult(SearchResponse searchResponse) {
+    private <T> Result<T> getSearchResult(SearchResponse searchResponse,Class<T> clazz) {
         SearchHit[] searchHit = searchResponse.getHits().getHits();
-        Result<Transaction> result = new Result<>();
+        Result<T> result = new Result<>();
         result.setTotal(searchResponse.getHits().getTotalHits().value);
-        List<Transaction> transactions = new ArrayList<>();
+        List<T> transactions = new ArrayList<>();
         for (SearchHit hit : searchHit) {
-            transactions.add(JSON.parseObject(hit.getSourceAsString(), Transaction.class));
+            transactions.add(JSON.parseObject(hit.getSourceAsString(), clazz));
         }
         result.setContents(transactions);
+        return result;
+    }
+
+    private <T> List<T> getSearchResultList(SearchResponse searchResponse,Class<T> clazz) {
+        SearchHit[] searchHit = searchResponse.getHits().getHits();
+        List<T> result = new ArrayList<>();
+        for (SearchHit hit : searchHit) {
+            result.add(JSON.parseObject(hit.getSourceAsString(), clazz));
+        }
         return result;
     }
 

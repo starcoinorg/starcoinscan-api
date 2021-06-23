@@ -44,10 +44,10 @@ public class TransactionController {
         return transactionService.get(network,id);
     }
 
-    @GetMapping("/{network}/byAddress/{address}")
+    @GetMapping("list/{network}/byAddress/{address}")
     public Result<Transaction> getRangeByAddressAlias(@PathVariable("network") String network,@PathVariable("address") String address,
                                                  @RequestParam(value = "count", required = false, defaultValue = "20") int count) throws IOException {
-        return transactionService.getRangeByAddress(network,address,1,count);
+        return transactionService.getRangeByAddressAll(network,address,1,count);
     }
 
     @GetMapping("/address/{network}/{address}/page/{page}")
