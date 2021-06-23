@@ -27,14 +27,27 @@ public class TransactionController {
     @GetMapping("/list/{network}/page/{page}")
     public Result<Transaction> getRangeTransactions(@PathVariable("network") String network, @PathVariable("page") int page,
                                       @RequestParam(value = "count", required = false, defaultValue = "20") int count,
-                                                  @RequestParam(value = "after", required = false, defaultValue = "0") int start_height) throws Exception {
-        return transactionService.getRange(network, page, count,start_height);
+                                                  @RequestParam(value = "after", required = false, defaultValue = "0") int startHeight,
+                                                    @RequestParam(value = "txn_type", required = false, defaultValue = "0") int txnType) throws Exception {
+        return transactionService.getRange(network, page, count,startHeight,txnType);
     }
 
-    @GetMapping("/{network}/byAddress/{address}")
+    @GetMapping("/pending_txns/{network}/page/{page}")
+    public Result<Transaction> getRangePendingTransactions(@PathVariable("network") String network, @PathVariable("page") int page,
+                                                    @RequestParam(value = "count", required = false, defaultValue = "20") int count,
+                                                    @RequestParam(value = "after", required = false, defaultValue = "0") int startHeight) throws Exception {
+        return transactionService.getRange(network, page, count,startHeight,0);
+    }
+
+    @GetMapping("/pending_txn/get/{network}/{id}")
+    public Transaction getPendingTransaction(@PathVariable("network") String network, @PathVariable("id") String id) throws IOException {
+        return transactionService.get(network,id);
+    }
+
+    @GetMapping("list/{network}/byAddress/{address}")
     public Result<Transaction> getRangeByAddressAlias(@PathVariable("network") String network,@PathVariable("address") String address,
                                                  @RequestParam(value = "count", required = false, defaultValue = "20") int count) throws IOException {
-        return transactionService.getRangeByAddress(network,address,1,count);
+        return transactionService.getRangeByAddressAll(network,address,1,count);
     }
 
     @GetMapping("/address/{network}/{address}/page/{page}")

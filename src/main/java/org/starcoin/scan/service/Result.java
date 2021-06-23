@@ -3,6 +3,8 @@ package org.starcoin.scan.service;
 import java.util.List;
 
 public class Result<T> {
+
+    public static final Result EmptyResult = new Result<>();
     private List<T> contents;
     private long total;
 
@@ -21,4 +23,5 @@ public class Result<T> {
     public void setTotal(long total) {
         this.total = total;
     }
+
 }
