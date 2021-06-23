@@ -28,7 +28,7 @@ public class TransactionController {
     public Result<Transaction> getRangeTransactions(@PathVariable("network") String network, @PathVariable("page") int page,
                                       @RequestParam(value = "count", required = false, defaultValue = "20") int count,
                                                   @RequestParam(value = "after", required = false, defaultValue = "0") int startHeight,
-                                                    @RequestParam(value = "txn_type", required = false, defaultValue = "0") int txnType) throws Exception {
+                                                    @RequestParam(value = "txn_type", required = false, defaultValue = "1") int txnType) throws Exception {
         return transactionService.getRange(network, page, count,startHeight,txnType);
     }
 
@@ -44,7 +44,7 @@ public class TransactionController {
         return transactionService.get(network,id);
     }
 
-    @GetMapping("list/{network}/byAddress/{address}")
+    @GetMapping("{network}/byAddress/{address}")
     public Result<Transaction> getRangeByAddressAlias(@PathVariable("network") String network,@PathVariable("address") String address,
                                                  @RequestParam(value = "count", required = false, defaultValue = "20") int count) throws IOException {
         return transactionService.getRangeByAddressAll(network,address,1,count);
@@ -53,7 +53,7 @@ public class TransactionController {
     @GetMapping("/address/{network}/{address}/page/{page}")
     public Result<Transaction> getRangeByAddress(@PathVariable("network") String network,@PathVariable("address") String address, @PathVariable(value = "page", required = false) int page,
                                                @RequestParam(value = "count", required = false, defaultValue = "20") int count) throws IOException {
-        return transactionService.getRangeByAddress(network,address,page,count);
+        return transactionService.getRangeByAddressAll(network,address,page,count);
     }
 
     @GetMapping("/{network}/byBlock/{block_hash}")
