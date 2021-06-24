@@ -24,4 +24,11 @@ public class Result<T> {
         this.total = total;
     }
 
+    @Override
+    public String toString() {
+        return "Result{" +
+                "contents=" + contents.toString() +
+                ", total=" + total +
+                '}';
+    }
 }

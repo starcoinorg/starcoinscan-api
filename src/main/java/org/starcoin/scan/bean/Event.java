@@ -89,4 +89,18 @@ public class Event {
     public void setEventSeqNumber(String eventSeqNumber) {
         this.eventSeqNumber = eventSeqNumber;
     }
+
+    @Override
+    public String toString() {
+        return "Event{" +
+                "blockHash='" + blockHash + '\'' +
+                ", blockNumber='" + blockNumber + '\'' +
+                ", transactionHash='" + transactionHash + '\'' +
+                ", transactionIndex=" + transactionIndex +
+                ", data='" + data + '\'' +
+                ", typeTag='" + typeTag + '\'' +
+                ", eventKey='" + eventKey + '\'' +
+                ", eventSeqNumber='" + eventSeqNumber + '\'' +
+                '}';
+    }
 }
