@@ -24,6 +24,7 @@ import org.starcoin.scan.constant.Constant;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.starcoin.scan.service.ServiceUtils.ELASTICSEARCH_MAX_HITS;
 
@@ -114,6 +115,8 @@ public class TransactionService {
         exersiceBoolQuery.should(QueryBuilders.termQuery("type_tag", ServiceUtils.depositEvent));
         exersiceBoolQuery.should(QueryBuilders.termQuery("type_tag", ServiceUtils.withdrawEvent));
         exersiceBoolQuery.must(QueryBuilders.termQuery("event_address", address));
+        exersiceBoolQuery.must(QueryBuilders.rangeQuery("transaction_index").gt(0));
+
 
         searchSourceBuilder.query(exersiceBoolQuery);
         searchRequest.source(searchSourceBuilder);
@@ -130,14 +133,18 @@ public class TransactionService {
         if(events.getContents().size()==0){
             return Result.EmptyResult;
         }
+        //logger.info("events is "+events.getContents().stream().map(e -> e.getTransactionHash()).collect(Collectors.joining(",")));
         SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.size(count);
 
         BoolQueryBuilder exersiceBoolQuery = QueryBuilders.boolQuery();
-        for (Event event:events.getContents())
+        for (Event event:events.getContents()){
             exersiceBoolQuery.should(QueryBuilders.termQuery("transaction_hash", event.getTransactionHash()));
+        }
 
         searchSourceBuilder.query(exersiceBoolQuery);
+        searchSourceBuilder.sort("timestamp", SortOrder.DESC);
         searchRequest.source(searchSourceBuilder);
         searchSourceBuilder.trackTotalHits(true);
 
