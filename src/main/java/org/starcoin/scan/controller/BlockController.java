@@ -48,4 +48,9 @@ public class BlockController {
     public UncleBlock getUncleBlockByHeight(@PathVariable("network") String network, @PathVariable("height") long height) {
         return blockService.getUncleBlockByHeight(network, height);
     }
+
+    @GetMapping("/{network}/uncle/hash/{hash}")
+    public UncleBlock getUncleBlockByHash(@PathVariable("network") String network, @PathVariable("hash") String hash) {
+        return blockService.getUncleBlockByHash(network, hash);
+    }
 }
