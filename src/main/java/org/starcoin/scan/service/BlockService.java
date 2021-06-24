@@ -145,6 +145,29 @@ public class BlockService {
         return null;
     }
 
+    public UncleBlock getUncleBlockByHash(String network, String hash) {
+        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.UNCLE_BLOCK_INDEX));
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("header.block_hash", hash);
+        searchSourceBuilder.query(termQueryBuilder);
+        searchRequest.source(searchSourceBuilder);
+        SearchResponse searchResponse = null;
+        try {
+            searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            logger.error("get uncle block by hash error:", e);
+            return null;
+        }
+        Result<UncleBlock> result = getSearchResult(searchResponse, UncleBlock.class);
+        List<UncleBlock> blocks = result.getContents();
+        if (blocks.size() == 1) {
+            return blocks.get(0);
+        } else {
+            logger.warn("get uncle block by hash is null, network: {}, : {}", network,hash);
+        }
+        return null;
+    }
+
     public Result<UncleBlock> getUnclesRange(String network, int page, int count, int start_height) {
         SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.UNCLE_BLOCK_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
@@ -162,7 +185,7 @@ public class BlockService {
                 searchSourceBuilder.from(offset);
             }
         }
-        searchSourceBuilder.sort("parent_block_number", SortOrder.DESC);
+        searchSourceBuilder.sort("uncle_block_number", SortOrder.DESC);
         searchSourceBuilder.trackTotalHits(true);
         searchRequest.source(searchSourceBuilder);
         SearchResponse searchResponse = null;
