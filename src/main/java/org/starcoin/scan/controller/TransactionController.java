@@ -1,7 +1,9 @@
 package org.starcoin.scan.controller;
 
+import com.novi.serde.DeserializationError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.starcoin.scan.bean.Event;
 import org.starcoin.scan.bean.Transaction;
 import org.starcoin.scan.service.Result;
 import org.starcoin.scan.service.TransactionService;
@@ -64,5 +66,12 @@ public class TransactionController {
     @GetMapping("/{network}/byBlockHeight/{block_height}")
     public Result<Transaction> getByBlockHeight(@PathVariable("network") String network, @PathVariable("block_height") int blockHeight) throws IOException {
         return transactionService.getByBlockHeight(network,blockHeight);
+    }
+
+    @GetMapping("/getEventByProposalIdAndProposer/{network}/{proposalId}/{proposer}/page/{page}")
+    public Result<Event> getEventByProposalIdAndProposer(@PathVariable("network") String network, @PathVariable("page") int page,
+                                                         @RequestParam(value = "count", required = false, defaultValue = "20") int count,
+                                                         @PathVariable("proposalId") Long proposalId, @PathVariable("proposer") String proposer) throws IOException, DeserializationError {
+        return transactionService.getEventsByProposalIdAndProposer(network, proposalId, proposer, page, count);
     }
 }
