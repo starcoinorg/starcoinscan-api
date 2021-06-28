@@ -1,28 +1,28 @@
 package org.starcoin.base;
 
 
-public final class AccountAddress {
-    public final java.util.@com.novi.serde.ArrayLen(length = 16) List<@com.novi.serde.Unsigned Byte> value;
+public final class Identifier {
+    public final String value;
 
-    public AccountAddress(java.util.@com.novi.serde.ArrayLen(length = 16) List<@com.novi.serde.Unsigned Byte> value) {
+    public Identifier(String value) {
         java.util.Objects.requireNonNull(value, "value must not be null");
         this.value = value;
     }
 
-    public static AccountAddress deserialize(com.novi.serde.Deserializer deserializer) throws com.novi.serde.DeserializationError {
+    public static Identifier deserialize(com.novi.serde.Deserializer deserializer) throws com.novi.serde.DeserializationError {
         deserializer.increase_container_depth();
         Builder builder = new Builder();
-        builder.value = TraitHelpers.deserialize_array16_u8_array(deserializer);
+        builder.value = deserializer.deserialize_str();
         deserializer.decrease_container_depth();
         return builder.build();
     }
 
-    public static AccountAddress bcsDeserialize(byte[] input) throws com.novi.serde.DeserializationError {
+    public static Identifier bcsDeserialize(byte[] input) throws com.novi.serde.DeserializationError {
         if (input == null) {
             throw new com.novi.serde.DeserializationError("Cannot deserialize null array");
         }
         com.novi.serde.Deserializer deserializer = new com.novi.bcs.BcsDeserializer(input);
-        AccountAddress value = deserialize(deserializer);
+        Identifier value = deserialize(deserializer);
         if (deserializer.get_buffer_offset() < input.length) {
             throw new com.novi.serde.DeserializationError("Some input bytes were not read");
         }
@@ -31,7 +31,7 @@ public final class AccountAddress {
 
     public void serialize(com.novi.serde.Serializer serializer) throws com.novi.serde.SerializationError {
         serializer.increase_container_depth();
-        TraitHelpers.serialize_array16_u8_array(value, serializer);
+        serializer.serialize_str(value);
         serializer.decrease_container_depth();
     }
 
@@ -45,7 +45,7 @@ public final class AccountAddress {
         if (this == obj) return true;
         if (obj == null) return false;
         if (getClass() != obj.getClass()) return false;
-        AccountAddress other = (AccountAddress) obj;
+        Identifier other = (Identifier) obj;
         if (!java.util.Objects.equals(this.value, other.value)) {
             return false;
         }
@@ -59,10 +59,10 @@ public final class AccountAddress {
     }
 
     public static final class Builder {
-        public java.util.@com.novi.serde.ArrayLen(length = 16) List<@com.novi.serde.Unsigned Byte> value;
+        public String value;
 
-        public AccountAddress build() {
-            return new AccountAddress(
+        public Identifier build() {
+            return new Identifier(
                     value
             );
         }
