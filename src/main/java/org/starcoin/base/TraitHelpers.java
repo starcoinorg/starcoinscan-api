@@ -1,18 +1,17 @@
 package org.starcoin.base;
 
-import org.starcoin.base.*;
 
 final class TraitHelpers {
-    static void serialize_array16_u8_array(java.util.@com.novi.serde.ArrayLen(length=16) List<@com.novi.serde.Unsigned Byte> value, com.novi.serde.Serializer serializer) throws com.novi.serde.SerializationError {
+    static void serialize_array16_u8_array(java.util.@com.novi.serde.ArrayLen(length = 16) List<@com.novi.serde.Unsigned Byte> value, com.novi.serde.Serializer serializer) throws com.novi.serde.SerializationError {
         if (value.size() != 16) {
-            throw new IllegalArgumentException("Invalid length for fixed-size array: " + value.size() + " instead of "+ 16);
+            throw new java.lang.IllegalArgumentException("Invalid length for fixed-size array: " + value.size() + " instead of " + 16);
         }
         for (@com.novi.serde.Unsigned Byte item : value) {
             serializer.serialize_u8(item);
         }
     }
 
-    static java.util.@com.novi.serde.ArrayLen(length=16) List<@com.novi.serde.Unsigned Byte> deserialize_array16_u8_array(com.novi.serde.Deserializer deserializer) throws com.novi.serde.DeserializationError {
+    static java.util.@com.novi.serde.ArrayLen(length = 16) List<@com.novi.serde.Unsigned Byte> deserialize_array16_u8_array(com.novi.serde.Deserializer deserializer) throws com.novi.serde.DeserializationError {
         java.util.List<@com.novi.serde.Unsigned Byte> obj = new java.util.ArrayList<@com.novi.serde.Unsigned Byte>(16);
         for (long i = 0; i < 16; i++) {
             obj.add(deserializer.deserialize_u8());
@@ -103,6 +102,22 @@ final class TraitHelpers {
         java.util.List<String> obj = new java.util.ArrayList<String>((int) length);
         for (long i = 0; i < length; i++) {
             obj.add(deserializer.deserialize_str());
+        }
+        return obj;
+    }
+
+    static void serialize_vector_TypeTag(java.util.List<TypeTag> value, com.novi.serde.Serializer serializer) throws com.novi.serde.SerializationError {
+        serializer.serialize_len(value.size());
+        for (TypeTag item : value) {
+            item.serialize(serializer);
+        }
+    }
+
+    static java.util.List<TypeTag> deserialize_vector_TypeTag(com.novi.serde.Deserializer deserializer) throws com.novi.serde.DeserializationError {
+        long length = deserializer.deserialize_len();
+        java.util.List<TypeTag> obj = new java.util.ArrayList<TypeTag>((int) length);
+        for (long i = 0; i < length; i++) {
+            obj.add(TypeTag.deserialize(deserializer));
         }
         return obj;
     }

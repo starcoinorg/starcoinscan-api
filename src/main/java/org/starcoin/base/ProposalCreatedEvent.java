@@ -1,43 +1,32 @@
 package org.starcoin.base;
 
-public final class VoteChangedEvent {
+
+public final class ProposalCreatedEvent {
     public final @com.novi.serde.Unsigned Long proposal_id;
     public final AccountAddress proposer;
-    public final AccountAddress voter;
-    public final Boolean agree;
-    public final java.math.@com.novi.serde.Unsigned @com.novi.serde.Int128 BigInteger vote;
 
-    public VoteChangedEvent(@com.novi.serde.Unsigned Long proposal_id, AccountAddress proposer, AccountAddress voter, Boolean agree, java.math.@com.novi.serde.Unsigned @com.novi.serde.Int128 BigInteger vote) {
+    public ProposalCreatedEvent(@com.novi.serde.Unsigned Long proposal_id, AccountAddress proposer) {
         java.util.Objects.requireNonNull(proposal_id, "proposal_id must not be null");
         java.util.Objects.requireNonNull(proposer, "proposer must not be null");
-        java.util.Objects.requireNonNull(voter, "voter must not be null");
-        java.util.Objects.requireNonNull(agree, "agree must not be null");
-        java.util.Objects.requireNonNull(vote, "vote must not be null");
         this.proposal_id = proposal_id;
         this.proposer = proposer;
-        this.voter = voter;
-        this.agree = agree;
-        this.vote = vote;
     }
 
-    public static VoteChangedEvent deserialize(com.novi.serde.Deserializer deserializer) throws com.novi.serde.DeserializationError {
+    public static ProposalCreatedEvent deserialize(com.novi.serde.Deserializer deserializer) throws com.novi.serde.DeserializationError {
         deserializer.increase_container_depth();
         Builder builder = new Builder();
         builder.proposal_id = deserializer.deserialize_u64();
         builder.proposer = AccountAddress.deserialize(deserializer);
-        builder.voter = AccountAddress.deserialize(deserializer);
-        builder.agree = deserializer.deserialize_bool();
-        builder.vote = deserializer.deserialize_u128();
         deserializer.decrease_container_depth();
         return builder.build();
     }
 
-    public static VoteChangedEvent bcsDeserialize(byte[] input) throws com.novi.serde.DeserializationError {
+    public static ProposalCreatedEvent bcsDeserialize(byte[] input) throws com.novi.serde.DeserializationError {
         if (input == null) {
             throw new com.novi.serde.DeserializationError("Cannot deserialize null array");
         }
         com.novi.serde.Deserializer deserializer = new com.novi.bcs.BcsDeserializer(input);
-        VoteChangedEvent value = deserialize(deserializer);
+        ProposalCreatedEvent value = deserialize(deserializer);
         if (deserializer.get_buffer_offset() < input.length) {
             throw new com.novi.serde.DeserializationError("Some input bytes were not read");
         }
@@ -48,9 +37,6 @@ public final class VoteChangedEvent {
         serializer.increase_container_depth();
         serializer.serialize_u64(proposal_id);
         proposer.serialize(serializer);
-        voter.serialize(serializer);
-        serializer.serialize_bool(agree);
-        serializer.serialize_u128(vote);
         serializer.decrease_container_depth();
     }
 
@@ -64,20 +50,11 @@ public final class VoteChangedEvent {
         if (this == obj) return true;
         if (obj == null) return false;
         if (getClass() != obj.getClass()) return false;
-        VoteChangedEvent other = (VoteChangedEvent) obj;
+        ProposalCreatedEvent other = (ProposalCreatedEvent) obj;
         if (!java.util.Objects.equals(this.proposal_id, other.proposal_id)) {
             return false;
         }
         if (!java.util.Objects.equals(this.proposer, other.proposer)) {
-            return false;
-        }
-        if (!java.util.Objects.equals(this.voter, other.voter)) {
-            return false;
-        }
-        if (!java.util.Objects.equals(this.agree, other.agree)) {
-            return false;
-        }
-        if (!java.util.Objects.equals(this.vote, other.vote)) {
             return false;
         }
         return true;
@@ -87,26 +64,17 @@ public final class VoteChangedEvent {
         int value = 7;
         value = 31 * value + (this.proposal_id != null ? this.proposal_id.hashCode() : 0);
         value = 31 * value + (this.proposer != null ? this.proposer.hashCode() : 0);
-        value = 31 * value + (this.voter != null ? this.voter.hashCode() : 0);
-        value = 31 * value + (this.agree != null ? this.agree.hashCode() : 0);
-        value = 31 * value + (this.vote != null ? this.vote.hashCode() : 0);
         return value;
     }
 
     public static final class Builder {
         public @com.novi.serde.Unsigned Long proposal_id;
         public AccountAddress proposer;
-        public AccountAddress voter;
-        public Boolean agree;
-        public java.math.@com.novi.serde.Unsigned @com.novi.serde.Int128 BigInteger vote;
 
-        public VoteChangedEvent build() {
-            return new VoteChangedEvent(
+        public ProposalCreatedEvent build() {
+            return new ProposalCreatedEvent(
                     proposal_id,
-                    proposer,
-                    voter,
-                    agree,
-                    vote
+                    proposer
             );
         }
     }

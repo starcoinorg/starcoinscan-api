@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.starcoin.base.AccountAddress;
 import org.starcoin.base.VoteChangedEvent;
 import org.starcoin.scan.bean.Event;
+import org.starcoin.scan.bean.PendingTransaction;
 import org.starcoin.scan.bean.Transaction;
 import org.starcoin.scan.constant.Constant;
 import org.starcoin.scan.utils.CommonUtils;
@@ -82,6 +83,44 @@ public class TransactionService {
         searchSourceBuilder.trackTotalHits(true);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
         return getSearchResult(searchResponse,Transaction.class);
+    }
+
+    public Result<PendingTransaction> getRangePendingTransaction(String network, int page, int count, int start_height) throws IOException {
+        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.PendingTxnIndex));
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+
+        //page size
+        searchSourceBuilder.size(count);
+        //begin offset
+        int offset = 0;
+        if (page > 1) {
+            offset = (page - 1) * count;
+            if (offset >= ELASTICSEARCH_MAX_HITS && start_height > 0) {
+                offset = start_height - (page - 1) * count;
+                searchSourceBuilder.searchAfter(new Object[]{offset});
+            }else {
+                searchSourceBuilder.from(offset);
+            }
+        }
+        searchSourceBuilder.from(offset);
+        searchSourceBuilder.sort("timestamp", SortOrder.DESC);
+        searchRequest.source(searchSourceBuilder);
+        searchSourceBuilder.trackTotalHits(true);
+        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        return getSearchResult(searchResponse,PendingTransaction.class);
+    }
+
+    public PendingTransaction getPending(String network,String id) throws IOException {
+        GetRequest getRequest = new GetRequest(ServiceUtils.getIndex(network, Constant.PendingTxnIndex), id);
+        GetResponse getResponse = client.get(getRequest, RequestOptions.DEFAULT);
+        if (getResponse.isExists()) {
+            String sourceAsString = getResponse.getSourceAsString();
+            return JSON.parseObject(sourceAsString, PendingTransaction.class);
+        } else {
+            logger.error("not found transaction, id: {}", id);
+            return null;
+        }
     }
 
     public Result<Transaction> getRangeByAddress(String network,String address, int page, int count) throws IOException {

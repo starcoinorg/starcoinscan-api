@@ -10,7 +10,7 @@ public abstract class BinarySerializer implements Serializer {
     private long containerDepthBudget;
 
     public BinarySerializer(long maxContainerDepth) {
-        output = new MyByteArrayOutputStream();
+        output = new BinarySerializer.MyByteArrayOutputStream();
         containerDepthBudget = maxContainerDepth;
     }
 
@@ -78,7 +78,7 @@ public abstract class BinarySerializer implements Serializer {
 
     public void serialize_u128(@Unsigned @Int128 BigInteger value) throws SerializationError {
         if (value.compareTo(BigInteger.ZERO) < 0 || !value.shiftRight(128).equals(BigInteger.ZERO)) {
-            throw new IllegalArgumentException("Invalid value for an unsigned int128");
+            throw new java.lang.IllegalArgumentException("Invalid value for an unsigned int128");
         }
         byte[] content = value.toByteArray();
         // BigInteger.toByteArray() may add a most-significant zero
@@ -114,12 +114,12 @@ public abstract class BinarySerializer implements Serializer {
     public void serialize_i128(@Int128 BigInteger value) throws SerializationError {
         if (value.compareTo(BigInteger.ZERO) >= 0) {
             if (!value.shiftRight(127).equals(BigInteger.ZERO)) {
-                throw new IllegalArgumentException("Invalid value for a signed int128");
+                throw new java.lang.IllegalArgumentException("Invalid value for a signed int128");
             }
             serialize_u128(value);
         } else {
             if (!value.add(BigInteger.ONE).negate().shiftRight(127).equals(BigInteger.ZERO)) {
-                throw new IllegalArgumentException("Invalid value for a signed int128");
+                throw new java.lang.IllegalArgumentException("Invalid value for a signed int128");
             }
             serialize_u128(value.add(BigInteger.ONE.shiftLeft(128)));
         }

@@ -4,6 +4,7 @@ import com.novi.serde.DeserializationError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.starcoin.scan.bean.Event;
+import org.starcoin.scan.bean.PendingTransaction;
 import org.starcoin.scan.bean.Transaction;
 import org.starcoin.scan.service.Result;
 import org.starcoin.scan.service.TransactionService;
@@ -35,15 +36,15 @@ public class TransactionController {
     }
 
     @GetMapping("/pending_txns/{network}/page/{page}")
-    public Result<Transaction> getRangePendingTransactions(@PathVariable("network") String network, @PathVariable("page") int page,
-                                                    @RequestParam(value = "count", required = false, defaultValue = "20") int count,
-                                                    @RequestParam(value = "after", required = false, defaultValue = "0") int startHeight) throws Exception {
-        return transactionService.getRange(network, page, count,startHeight,0);
+    public Result<PendingTransaction> getRangePendingTransactions(@PathVariable("network") String network, @PathVariable("page") int page,
+                                                                  @RequestParam(value = "count", required = false, defaultValue = "20") int count,
+                                                                  @RequestParam(value = "after", required = false, defaultValue = "0") int startHeight) throws Exception {
+        return transactionService.getRangePendingTransaction(network, page, count,startHeight);
     }
 
     @GetMapping("/pending_txn/get/{network}/{id}")
-    public Transaction getPendingTransaction(@PathVariable("network") String network, @PathVariable("id") String id) throws IOException {
-        return transactionService.get(network,id);
+    public PendingTransaction getPendingTransaction(@PathVariable("network") String network, @PathVariable("id") String id) throws IOException {
+        return transactionService.getPending(network,id);
     }
 
     @GetMapping("{network}/byAddress/{address}")
