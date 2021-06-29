@@ -1,6 +1,5 @@
 package org.starcoin.base;
 
-
 public final class AccountAddress {
     public final java.util.@com.novi.serde.ArrayLen(length = 16) List<@com.novi.serde.Unsigned Byte> value;
 

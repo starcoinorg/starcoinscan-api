@@ -1,6 +1,5 @@
 package org.starcoin.base;
 
-
 public final class VoteChangedEvent {
     public final @com.novi.serde.Unsigned Long proposal_id;
     public final AccountAddress proposer;
