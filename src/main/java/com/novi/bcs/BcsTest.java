@@ -23,11 +23,6 @@ public class BcsTest {
         assert Arrays.equals(serializer.get_bytes(), new byte[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0});
 
         try {
-            serializer.serialize_u128(BigInteger.ONE.negate());
-            assert false;
-        } catch (java.lang.IllegalArgumentException e) { /* all good */  }
-
-        try {
             serializer.serialize_u128(BigInteger.ONE.shiftLeft(128).add(BigInteger.ONE));
             assert false;
         } catch (java.lang.IllegalArgumentException e) { /* all good */  }
@@ -49,11 +44,6 @@ public class BcsTest {
         serializer = new BcsSerializer();
         serializer.serialize_i128(BigInteger.ONE.shiftLeft(127).negate());
         assert Arrays.equals(serializer.get_bytes(), new byte[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -128});
-
-        try {
-            serializer.serialize_i128(BigInteger.ONE.shiftLeft(127));
-            assert false;
-        } catch (java.lang.IllegalArgumentException e) { /* all good */  }
 
         try {
             serializer.serialize_i128(BigInteger.ONE.shiftLeft(127).add(BigInteger.ONE).negate());
