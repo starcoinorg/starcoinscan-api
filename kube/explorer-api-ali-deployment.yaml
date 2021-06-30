@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: explorer-new-api-deployment
+  labels:
+    app: explorer-new-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: explorer-new-api
+  template:
+    metadata:
+      labels:
+        app: explorer-new-api
+    spec:
+      containers:
+        - name: explorer-new-api
+          image: starcoin/starcoin_scan:sha-f96c890
+          ports:
+            - containerPort: 8500
+          env:
+            - name: STARCOIN_ES_URL
+              value: "es-cn-n6w24qcc200cq97zg.public.elasticsearch.aliyuncs.com"
+            - name: STARCOIN_ES_PROTOCOL
+              value: "http"
+            - name: STARCOIN_ES_PORT
+              value: "9200"
+            - name: STARCOIN_ES_USER
+              value: elastic
+            - name: STARCOIN_ES_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: elasticsearch-pw-elastic
+                  key: password
