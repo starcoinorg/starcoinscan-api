@@ -9,7 +9,6 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermQueryBuilder;
-import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.slf4j.Logger;
@@ -21,7 +20,6 @@ import org.starcoin.scan.bean.UncleBlock;
 import org.starcoin.scan.constant.Constant;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.starcoin.scan.service.ServiceUtils.ELASTICSEARCH_MAX_HITS;
@@ -56,15 +54,15 @@ public class BlockService {
         try {
             searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {
-           logger.error("get block by hash error:", e);
-           return null;
+            logger.error("get block by hash error:", e);
+            return null;
         }
-        Result<Block> result = getSearchResult(searchResponse, Block.class);
+        Result<Block> result = ServiceUtils.getSearchResult(searchResponse, Block.class);
         List<Block> blocks = result.getContents();
         if (blocks.size() == 1) {
             return blocks.get(0);
         } else {
-            logger.warn("get block by hash is null, network: {}, : {}", network,hash);
+            logger.warn("get block by hash is null, network: {}, : {}", network, hash);
         }
         return null;
     }
@@ -82,7 +80,7 @@ public class BlockService {
             logger.error("get block by height error:", e);
             return null;
         }
-        Result<Block> result = getSearchResult(searchResponse, Block.class);
+        Result<Block> result = ServiceUtils.getSearchResult(searchResponse, Block.class);
         List<Block> blocks = result.getContents();
         if (blocks.size() == 1) {
             return blocks.get(0);
@@ -105,7 +103,7 @@ public class BlockService {
             if (offset >= ELASTICSEARCH_MAX_HITS && start_height > 0) {
                 offset = start_height - (page - 1) * count;
                 searchSourceBuilder.searchAfter(new Object[]{offset});
-            }else {
+            } else {
                 searchSourceBuilder.from(offset);
             }
         }
@@ -119,7 +117,7 @@ public class BlockService {
             logger.error("get range block error:", e);
             return null;
         }
-        return getSearchResult(searchResponse, Block.class);
+        return ServiceUtils.getSearchResult(searchResponse, Block.class);
     }
 
     public UncleBlock getUncleBlockByHeight(String network, long height) {
@@ -135,7 +133,7 @@ public class BlockService {
             logger.error("get uncle block error:", e);
             return null;
         }
-        Result<UncleBlock> result = getSearchResult(searchResponse, UncleBlock.class);
+        Result<UncleBlock> result = ServiceUtils.getSearchResult(searchResponse, UncleBlock.class);
         List<UncleBlock> blocks = result.getContents();
         if (blocks.size() == 1) {
             return blocks.get(0);
@@ -158,12 +156,12 @@ public class BlockService {
             logger.error("get uncle block by hash error:", e);
             return null;
         }
-        Result<UncleBlock> result = getSearchResult(searchResponse, UncleBlock.class);
+        Result<UncleBlock> result = ServiceUtils.getSearchResult(searchResponse, UncleBlock.class);
         List<UncleBlock> blocks = result.getContents();
         if (blocks.size() == 1) {
             return blocks.get(0);
         } else {
-            logger.warn("get uncle block by hash is null, network: {}, : {}", network,hash);
+            logger.warn("get uncle block by hash is null, network: {}, : {}", network, hash);
         }
         return null;
     }
@@ -181,7 +179,7 @@ public class BlockService {
             if (offset >= ELASTICSEARCH_MAX_HITS && start_height > 0) {
                 offset = start_height - (page - 1) * count;
                 searchSourceBuilder.searchAfter(new Object[]{offset});
-            }else {
+            } else {
                 searchSourceBuilder.from(offset);
             }
         }
@@ -195,19 +193,7 @@ public class BlockService {
             logger.error("get uncle range error:", e);
             return null;
         }
-        return getSearchResult(searchResponse, UncleBlock.class);
-    }
-
-    private <T> Result<T> getSearchResult(SearchResponse searchResponse, Class<T> object) {
-        SearchHit[] searchHit = searchResponse.getHits().getHits();
-        Result<T> result = new Result<>();
-        result.setTotal(searchResponse.getHits().getTotalHits().value);
-        List<T> blocks = new ArrayList<>();
-        for (SearchHit hit : searchHit) {
-            blocks.add(JSON.parseObject(hit.getSourceAsString(), object));
-        }
-        result.setContents(blocks);
-        return result;
+        return ServiceUtils.getSearchResult(searchResponse, UncleBlock.class);
     }
 
 

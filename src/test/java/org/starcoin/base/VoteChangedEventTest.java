@@ -3,13 +3,11 @@ package org.starcoin.base;
 import com.novi.serde.DeserializationError;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 class VoteChangedEventTest {
 
 
-    public static byte hexToByte(String inHex){
-        return (byte)Integer.parseInt(inHex,16);
+    public static byte hexToByte(String inHex) {
+        return (byte) Integer.parseInt(inHex, 16);
     }
 
     public static byte[] hexToByteArray(String inHex) {
@@ -29,12 +27,13 @@ class VoteChangedEventTest {
         }
         return result;
     }
+
     @Test
     void bcsDeserialize() throws DeserializationError {
         String hexStr = "0000000000000000b2aa52f94db4516c5beecef363af850ab2aa52f94db4516c5beecef363af850a0100ca9a3b000000000000000000000000";
         byte[] voteBytes = hexToByteArray(hexStr);
         VoteChangedEvent voteEvent = VoteChangedEvent.bcsDeserialize(voteBytes);
-        assert voteEvent.agree==true;
+        assert voteEvent.agree == true;
         assert voteEvent.proposal_id == 0;
     }
 }

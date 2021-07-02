@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: explorer-new-api
-          image: starcoin/starcoin_scan:sha-f9707a9
+          image: starcoin/starcoin_scan:sha-67c8a23
           ports:
             - containerPort: 8500
           env:
