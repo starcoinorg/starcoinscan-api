@@ -6,12 +6,12 @@ metadata:
   name: explorer-new-api
 spec:
   ports:
-  - port: 8500
-    name: http
-    protocol: TCP
-    targetPort: 8500
+    - port: 8500
+      name: http
+      protocol: TCP
+      targetPort: 8500
   selector:
     app: explorer-new-api
   type: LoadBalancer
 status:
-  loadBalancer: {}
+  loadBalancer: { }

@@ -7,8 +7,6 @@ import org.starcoin.scan.bean.UncleBlock;
 import org.starcoin.scan.service.BlockService;
 import org.starcoin.scan.service.Result;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("v1/block")
 public class BlockController {
