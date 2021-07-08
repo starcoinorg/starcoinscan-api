@@ -1,7 +1,6 @@
 package org.starcoin.scan.service;
 
 import com.alibaba.fastjson.JSON;
-import com.novi.serde.DeserializationError;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequest;
@@ -18,13 +17,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.starcoin.base.AccountAddress;
-import org.starcoin.base.VoteChangedEvent;
 import org.starcoin.scan.bean.Event;
 import org.starcoin.scan.bean.PendingTransaction;
 import org.starcoin.scan.bean.Transaction;
 import org.starcoin.scan.constant.Constant;
-import org.starcoin.scan.utils.CommonUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -175,7 +171,6 @@ public class TransactionService {
         if (events.getContents().size() == 0) {
             return Result.EmptyResult;
         }
-        //logger.info("events is "+events.getContents().stream().map(e -> e.getTransactionHash()).collect(Collectors.joining(",")));
         SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.size(count);
@@ -249,51 +244,6 @@ public class TransactionService {
             events.add(JSON.parseObject(hit.getSourceAsString(), Event.class));
         }
         result.setContents(events);
-        return result;
-    }
-
-    public Result<Event> getEventsByProposalIdAndProposer(String network, Long proposalId, String proposer, int page, int count) throws IOException, DeserializationError {
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_EVENT_INDEX));
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.size(count);
-        //begin offset
-        int offset = 0;
-        if (page > 1) {
-            offset = (page - 1) * count;
-        }
-        searchSourceBuilder.from(offset);
-
-        BoolQueryBuilder exersiceBoolQuery = QueryBuilders.boolQuery();
-        exersiceBoolQuery.must(QueryBuilders.matchQuery("tag_name", "VoteChangedEvent"));
-
-        searchSourceBuilder.query(exersiceBoolQuery);
-        searchRequest.source(searchSourceBuilder);
-        searchSourceBuilder.trackTotalHits(true);
-        searchSourceBuilder.sort("timestamp", SortOrder.DESC);
-
-        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-        return getSearchResultFilter(searchResponse, proposalId, proposer);
-    }
-
-    private Result<Event> getSearchResultFilter(SearchResponse searchResponse, Long proposalId, String proposerStr) throws DeserializationError {
-        SearchHit[] searchHit = searchResponse.getHits().getHits();
-        Result<Event> result = new Result<>();
-        result.setTotal(searchResponse.getHits().getTotalHits().value);
-        List<Event> transactions = new ArrayList<>();
-        for (SearchHit hit : searchHit) {
-            Event event = JSON.parseObject(hit.getSourceAsString(), Event.class);
-
-            byte[] voteBytes = CommonUtils.hexToByteArray(event.getData());
-            VoteChangedEvent data = VoteChangedEvent.bcsDeserialize(voteBytes);
-
-            byte[] proposerBytes = CommonUtils.hexToByteArray(proposerStr);
-            AccountAddress proposer = AccountAddress.bcsDeserialize(proposerBytes);
-            if (data.proposal_id != proposalId || !data.proposer.equals(proposer)) {
-                continue;
-            }
-            transactions.add(event);
-        }
-        result.setContents(transactions);
         return result;
     }
 }
