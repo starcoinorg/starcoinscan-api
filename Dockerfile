@@ -6,7 +6,7 @@ COPY .mvn .mvn
 COPY pom.xml .
 COPY src src
 
-RUN --mount=type=cache,target=/root/.m2 ./mvnw install -DskipTests
+RUN --mount=type=cache,target=/root/.m2 ./mvnw --settings settings.xml install -DskipTests
 
 FROM openjdk:8-jdk-alpine
 ARG STARCOIN_ES_URL
