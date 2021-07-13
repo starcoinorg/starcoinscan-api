@@ -1,6 +1,7 @@
 package org.starcoin.scan.service;
 
 import com.alibaba.fastjson.JSON;
+import com.novi.serde.DeserializationError;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequest;
@@ -21,12 +22,15 @@ import org.starcoin.scan.bean.Event;
 import org.starcoin.scan.bean.PendingTransaction;
 import org.starcoin.scan.bean.Transaction;
 import org.starcoin.scan.constant.Constant;
+import org.starcoin.types.AccountAddress;
+import org.starcoin.types.event.ProposalCreatedEvent;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.starcoin.scan.service.ServiceUtils.ELASTICSEARCH_MAX_HITS;
+import static org.starcoin.scan.utils.CommonUtils.hexToByteArray;
 
 
 @Service
@@ -138,6 +142,47 @@ public class TransactionService {
         return ServiceUtils.getSearchResult(searchResponse, Transaction.class);
     }
 
+    public Result<Event> getProposalEvents(String network, String eventAddress) throws IOException {
+        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_EVENT_INDEX));
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.size(ELASTICSEARCH_MAX_HITS);
+        searchSourceBuilder.from(0);
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+        boolQuery.filter(QueryBuilders.matchQuery("tag_name", ServiceUtils.proposalCreatedEvent));
+        boolQuery.must(QueryBuilders.rangeQuery("transaction_index").gt(0));
+
+        searchSourceBuilder.query(boolQuery);
+        searchRequest.source(searchSourceBuilder);
+        searchSourceBuilder.trackTotalHits(true);
+        searchSourceBuilder.sort("timestamp", SortOrder.DESC);
+
+        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        Result<Event> events = ServiceUtils.getSearchResult(searchResponse, Event.class);
+        List<Event> proposalEvents = new ArrayList<>();
+        byte[] addressBytes = hexToByteArray(eventAddress);
+        AccountAddress proposer = null;
+        try {
+            proposer = AccountAddress.bcsDeserialize(addressBytes);
+        } catch (DeserializationError deserializationError) {
+            deserializationError.printStackTrace();
+        }
+        for (Event event : events.getContents()) {
+            byte[] proposalBytes = hexToByteArray(event.getData());
+            try {
+                ProposalCreatedEvent payload = ProposalCreatedEvent.bcsDeserialize(proposalBytes);
+
+                if (payload.proposer.equals(proposer)) {
+                    proposalEvents.add(event);
+                }
+            } catch (DeserializationError deserializationError) {
+                deserializationError.printStackTrace();
+            }
+        }
+        events.setContents(proposalEvents);
+        events.setTotal(proposalEvents.size());
+        return events;
+    }
+
     public Result<Event> getEventsByAddress(String network, String address, int page, int count) throws IOException {
         SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_EVENT_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
@@ -149,14 +194,13 @@ public class TransactionService {
         }
         searchSourceBuilder.from(offset);
 
-        BoolQueryBuilder exersiceBoolQuery = QueryBuilders.boolQuery();
-        exersiceBoolQuery.should(QueryBuilders.termQuery("type_tag", ServiceUtils.depositEvent));
-        exersiceBoolQuery.should(QueryBuilders.termQuery("type_tag", ServiceUtils.withdrawEvent));
-        exersiceBoolQuery.must(QueryBuilders.termQuery("event_address", address));
-        exersiceBoolQuery.must(QueryBuilders.rangeQuery("transaction_index").gt(0));
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+        boolQuery.should(QueryBuilders.termQuery("tag_name", ServiceUtils.depositEvent));
+        boolQuery.should(QueryBuilders.termQuery("tag_name", ServiceUtils.withdrawEvent));
+        boolQuery.must(QueryBuilders.termQuery("event_address", address));
+        boolQuery.must(QueryBuilders.rangeQuery("transaction_index").gt(0));
 
-
-        searchSourceBuilder.query(exersiceBoolQuery);
+        searchSourceBuilder.query(boolQuery);
         searchRequest.source(searchSourceBuilder);
         searchSourceBuilder.trackTotalHits(true);
         searchSourceBuilder.sort("timestamp", SortOrder.DESC);
@@ -168,7 +212,9 @@ public class TransactionService {
 
     public Result<Transaction> getRangeByAddressAll(String network, String address, int page, int count) throws IOException {
         Result<Event> events = getEventsByAddress(network, address, page, count);
-        if (events.getContents().size() == 0) {
+        Result<Event> proposalEvents = getProposalEvents(network, address);
+        long total = events.getTotal() + proposalEvents.getTotal();
+        if (total == 0) {
             return Result.EmptyResult;
         }
         SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_INDEX));
@@ -176,9 +222,14 @@ public class TransactionService {
         searchSourceBuilder.size(count);
 
         BoolQueryBuilder exersiceBoolQuery = QueryBuilders.boolQuery();
+        List<String> termHashes = new ArrayList<>();
         for (Event event : events.getContents()) {
-            exersiceBoolQuery.should(QueryBuilders.termQuery("transaction_hash", event.getTransactionHash()));
+            termHashes.add(event.getTransactionHash());
         }
+        for (Event event : proposalEvents.getContents()) {
+            termHashes.add(event.getTransactionHash());
+        }
+        exersiceBoolQuery.should(QueryBuilders.termsQuery("transaction_hash", termHashes));
 
         searchSourceBuilder.query(exersiceBoolQuery);
         searchSourceBuilder.sort("timestamp", SortOrder.DESC);
@@ -187,8 +238,7 @@ public class TransactionService {
 
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
         Result<Transaction> result = ServiceUtils.getSearchResult(searchResponse, Transaction.class);
-        result.setTotal(events.getTotal());
-
+        result.setTotal(total);
         return result;
     }
 
