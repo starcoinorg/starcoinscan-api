@@ -15,8 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.starcoin.scan.bean.Block;
-import org.starcoin.scan.bean.UncleBlock;
+import org.starcoin.bean.Block;
+import org.starcoin.bean.UncleBlock;
 import org.starcoin.scan.constant.Constant;
 
 import java.io.IOException;
@@ -50,7 +50,7 @@ public class BlockService {
         TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("header.block_hash", hash);
         searchSourceBuilder.query(termQueryBuilder);
         searchRequest.source(searchSourceBuilder);
-        SearchResponse searchResponse = null;
+        SearchResponse searchResponse;
         try {
             searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {
@@ -73,7 +73,7 @@ public class BlockService {
         TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("metadata.number", height);
         searchSourceBuilder.query(termQueryBuilder);
         searchRequest.source(searchSourceBuilder);
-        SearchResponse searchResponse = null;
+        SearchResponse searchResponse;
         try {
             searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {
@@ -97,7 +97,7 @@ public class BlockService {
         //page size
         searchSourceBuilder.size(count);
         //begin offset
-        int offset = 0;
+        int offset;
         if (page > 1) {
             offset = (page - 1) * count;
             if (offset >= ELASTICSEARCH_MAX_HITS && start_height > 0) {
@@ -110,7 +110,7 @@ public class BlockService {
         searchSourceBuilder.sort("header.number", SortOrder.DESC);
         searchSourceBuilder.trackTotalHits(true);
         searchRequest.source(searchSourceBuilder);
-        SearchResponse searchResponse = null;
+        SearchResponse searchResponse;
         try {
             searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {
@@ -126,7 +126,7 @@ public class BlockService {
         TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("header.number", height);
         searchSourceBuilder.query(termQueryBuilder);
         searchRequest.source(searchSourceBuilder);
-        SearchResponse searchResponse = null;
+        SearchResponse searchResponse;
         try {
             searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {
@@ -149,7 +149,7 @@ public class BlockService {
         TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("header.block_hash", hash);
         searchSourceBuilder.query(termQueryBuilder);
         searchRequest.source(searchSourceBuilder);
-        SearchResponse searchResponse = null;
+        SearchResponse searchResponse;
         try {
             searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {
@@ -173,7 +173,7 @@ public class BlockService {
         //page size
         searchSourceBuilder.size(count);
         //begin offset
-        int offset = 0;
+        int offset;
         if (page > 1) {
             offset = (page - 1) * count;
             if (offset >= ELASTICSEARCH_MAX_HITS && start_height > 0) {
@@ -186,7 +186,7 @@ public class BlockService {
         searchSourceBuilder.sort("uncle_block_number", SortOrder.DESC);
         searchSourceBuilder.trackTotalHits(true);
         searchRequest.source(searchSourceBuilder);
-        SearchResponse searchResponse = null;
+        SearchResponse searchResponse;
         try {
             searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {

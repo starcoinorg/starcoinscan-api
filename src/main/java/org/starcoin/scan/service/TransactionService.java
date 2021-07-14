@@ -18,9 +18,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.starcoin.scan.bean.Event;
-import org.starcoin.scan.bean.PendingTransaction;
-import org.starcoin.scan.bean.Transaction;
+import org.starcoin.bean.Event;
+import org.starcoin.bean.PendingTransaction;
+import org.starcoin.bean.Transaction;
 import org.starcoin.scan.constant.Constant;
 import org.starcoin.types.AccountAddress;
 import org.starcoin.types.event.ProposalCreatedEvent;
@@ -206,8 +206,7 @@ public class TransactionService {
         searchSourceBuilder.sort("timestamp", SortOrder.DESC);
 
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-        Result<Event> events = ServiceUtils.getSearchResult(searchResponse, Event.class);
-        return events;
+        return ServiceUtils.getSearchResult(searchResponse, Event.class);
     }
 
     public Result<Transaction> getRangeByAddressAll(String network, String address, int page, int count) throws IOException {

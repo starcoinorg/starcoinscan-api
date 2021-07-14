@@ -2,6 +2,8 @@ package org.starcoin.scan.bean;
 
 import com.alibaba.fastjson.JSON;
 import org.junit.jupiter.api.Test;
+import org.starcoin.bean.Block;
+import org.starcoin.bean.BlockHeader;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
