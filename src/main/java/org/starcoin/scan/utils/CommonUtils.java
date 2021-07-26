@@ -1,5 +1,7 @@
 package org.starcoin.scan.utils;
 
+import org.apache.commons.text.StringEscapeUtils;
+
 public class CommonUtils {
 
     public static byte hexToByte(String inHex) {
@@ -26,5 +28,12 @@ public class CommonUtils {
             j++;
         }
         return result;
+    }
+
+    public static String unescapeEvent(String source) {
+        String result = StringEscapeUtils.unescapeJson(source);
+       result = result.replace("\"{\"struct", "{\"struct");
+       result = result.replace("}}\"", "}}");
+       return  result;
     }
 }

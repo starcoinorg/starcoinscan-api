@@ -2,9 +2,9 @@ package org.starcoin.scan.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.starcoin.bean.Event;
 import org.starcoin.bean.PendingTransaction;
-import org.starcoin.bean.Transaction;
+import org.starcoin.scan.service.Event;
+import org.starcoin.scan.service.Transaction;
 import org.starcoin.scan.service.Result;
 import org.starcoin.scan.service.TransactionService;
 

@@ -3,6 +3,7 @@ package org.starcoin.scan.service;
 import com.alibaba.fastjson.JSON;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.SearchHit;
+import org.starcoin.scan.utils.CommonUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +18,6 @@ public class ServiceUtils {
     public static String getIndex(String network, String indexConstant) {
         return network + "." + indexConstant;
     }
-
     public static <T> Result<T> getSearchResult(SearchResponse searchResponse, Class<T> object) {
         SearchHit[] searchHit = searchResponse.getHits().getHits();
         Result<T> result = new Result<>();
@@ -25,6 +25,18 @@ public class ServiceUtils {
         List<T> blocks = new ArrayList<>();
         for (SearchHit hit : searchHit) {
             blocks.add(JSON.parseObject(hit.getSourceAsString(), object));
+        }
+        result.setContents(blocks);
+        return result;
+    }
+
+    public static <T> Result<T> getSearchUnescapeResult(SearchResponse searchResponse, Class<T> object) {
+        SearchHit[] searchHit = searchResponse.getHits().getHits();
+        Result<T> result = new Result<>();
+        result.setTotal(searchResponse.getHits().getTotalHits().value);
+        List<T> blocks = new ArrayList<>();
+        for (SearchHit hit : searchHit) {
+            blocks.add(JSON.parseObject(CommonUtils.unescapeEvent(hit.getSourceAsString()), object));
         }
         result.setContents(blocks);
         return result;

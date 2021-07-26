@@ -18,18 +18,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.starcoin.bean.Event;
 import org.starcoin.bean.PendingTransaction;
-import org.starcoin.bean.Transaction;
 import org.starcoin.scan.constant.Constant;
+import org.starcoin.scan.utils.CommonUtils;
 import org.starcoin.types.AccountAddress;
 import org.starcoin.types.event.ProposalCreatedEvent;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import static org.starcoin.scan.service.ServiceUtils.ELASTICSEARCH_MAX_HITS;
+import static org.starcoin.scan.service.ServiceUtils.*;
 import static org.starcoin.scan.utils.CommonUtils.hexToByteArray;
 
 
@@ -157,7 +158,7 @@ public class TransactionService {
         searchSourceBuilder.sort("timestamp", SortOrder.DESC);
 
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-        Result<Event> events = ServiceUtils.getSearchResult(searchResponse, Event.class);
+        Result<Event> events = getSearchUnescapeResult(searchResponse, Event.class);
         List<Event> proposalEvents = new ArrayList<>();
         byte[] addressBytes = hexToByteArray(eventAddress);
         AccountAddress proposer = null;
@@ -206,7 +207,7 @@ public class TransactionService {
         searchSourceBuilder.sort("timestamp", SortOrder.DESC);
 
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-        return ServiceUtils.getSearchResult(searchResponse, Event.class);
+        return getSearchUnescapeResult(searchResponse, Event.class);
     }
 
     public Result<Transaction> getRangeByAddressAll(String network, String address, int page, int count) throws IOException {
@@ -248,6 +249,7 @@ public class TransactionService {
         TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("block_hash", blockHash);
 
         searchSourceBuilder.query(termQueryBuilder);
+        searchSourceBuilder.sort("transaction_index", SortOrder.DESC);
         searchRequest.source(searchSourceBuilder);
         searchSourceBuilder.trackTotalHits(true);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
@@ -259,13 +261,50 @@ public class TransactionService {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 
         TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("block_number", blockHeight);
-
         searchSourceBuilder.query(termQueryBuilder);
         searchRequest.source(searchSourceBuilder);
         searchSourceBuilder.trackTotalHits(true);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-        return ServiceUtils.getSearchResult(searchResponse, Transaction.class);
+        Result<Transaction> result = ServiceUtils.getSearchResult(searchResponse, Transaction.class);
+        //get events
+        List<Transaction> transactions = result.getContents();
+        List<String> txnHashes = new ArrayList<>();
+        Map<String, List<Event>> txnEvents = new HashMap<>();
+        for (Transaction txn: transactions) {
+            txnHashes.add(txn.getTransactionHash());
+            txnEvents.put(txn.getTransactionHash(), new ArrayList<>());
+        }
+        if (txnHashes.size() > 0) {
+            Result<Event> events = getEventsByTransaction(network, txnHashes);
+            for(Event event: events.getContents()) {
+                txnEvents.get(event.getTransactionHash()).add(event);
+            }
+            //set events
+            for (Transaction txn: transactions) {
+                txn.setEvents(txnEvents.get(txn.getTransactionHash()));
+            }
+        }
+        return result;
     }
+    public Result<Event> getEventsByTransaction(String network, List<String> txnHashes) throws IOException {
+        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_EVENT_INDEX));
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.size(ELASTICSEARCH_MAX_HITS);
+        //begin offset
+        int offset = 0;
+        searchSourceBuilder.from(0);
+
+        BoolQueryBuilder exersiceBoolQuery = QueryBuilders.boolQuery();
+        exersiceBoolQuery.should(QueryBuilders.termsQuery("transaction_hash", txnHashes));
+        searchSourceBuilder.query(exersiceBoolQuery);
+        searchRequest.source(searchSourceBuilder);
+        searchSourceBuilder.trackTotalHits(true);
+        searchSourceBuilder.sort("timestamp", SortOrder.DESC);
+
+        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        return getSearchUnescapeResult(searchResponse, Event.class);
+    }
+
 
     public Result<Event> getEvents(String network, String tag_name, int page, int count) throws IOException {
         SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_EVENT_INDEX));
@@ -285,14 +324,6 @@ public class TransactionService {
         searchSourceBuilder.sort("timestamp", SortOrder.DESC);
 
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-        SearchHit[] searchHit = searchResponse.getHits().getHits();
-        Result<Event> result = new Result<>();
-        result.setTotal(searchResponse.getHits().getTotalHits().value);
-        List<Event> events = new ArrayList<>();
-        for (SearchHit hit : searchHit) {
-            events.add(JSON.parseObject(hit.getSourceAsString(), Event.class));
-        }
-        result.setContents(events);
-        return result;
+        return getSearchUnescapeResult(searchResponse, Event.class);
     }
 }

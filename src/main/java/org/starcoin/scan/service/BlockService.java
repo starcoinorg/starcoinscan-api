@@ -70,7 +70,7 @@ public class BlockService {
     public Block getBlockByHeight(String network, long height) {
         SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.BLOCK_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("metadata.number", height);
+        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("header.number", height);
         searchSourceBuilder.query(termQueryBuilder);
         searchRequest.source(searchSourceBuilder);
         SearchResponse searchResponse;
