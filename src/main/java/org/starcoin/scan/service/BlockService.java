@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.starcoin.api.Result;
 import org.starcoin.bean.Block;
 import org.starcoin.bean.UncleBlock;
 import org.starcoin.scan.constant.Constant;
