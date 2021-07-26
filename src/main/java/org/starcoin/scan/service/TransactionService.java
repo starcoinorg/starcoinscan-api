@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.starcoin.api.Result;
 import org.starcoin.bean.Event;
 import org.starcoin.bean.PendingTransaction;
+import org.starcoin.bean.Transaction;
 import org.starcoin.scan.constant.Constant;
 import org.starcoin.types.AccountAddress;
 import org.starcoin.types.event.ProposalCreatedEvent;
@@ -46,7 +47,13 @@ public class TransactionService {
         GetResponse getResponse = client.get(getRequest, RequestOptions.DEFAULT);
         if (getResponse.isExists()) {
             String sourceAsString = getResponse.getSourceAsString();
-            return JSON.parseObject(sourceAsString, TransactionWithEvent.class);
+            TransactionWithEvent transaction = JSON.parseObject(sourceAsString, TransactionWithEvent.class);
+            //get events
+            List<String> txnHashes = new ArrayList<>();
+            txnHashes.add(transaction.getTransactionHash());
+            Result<Event> events = getEventsByTransaction(network, txnHashes);
+            transaction.setEvents(events.getContents());
+            return transaction;
         } else {
             logger.error("not found transaction, id: {}", id);
             return null;
