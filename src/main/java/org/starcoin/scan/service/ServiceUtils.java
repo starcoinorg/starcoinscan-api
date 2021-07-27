@@ -3,6 +3,7 @@ package org.starcoin.scan.service;
 import com.alibaba.fastjson.JSON;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.SearchHit;
+import org.starcoin.api.Result;
 import org.starcoin.scan.utils.CommonUtils;
 
 import java.util.ArrayList;

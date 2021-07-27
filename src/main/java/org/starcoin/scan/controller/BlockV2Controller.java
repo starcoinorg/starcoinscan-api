@@ -4,10 +4,10 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.starcoin.api.Result;
 import org.starcoin.bean.Block;
 import org.starcoin.bean.UncleBlock;
 import org.starcoin.scan.service.BlockService;
-import org.starcoin.scan.service.Result;
 
 @Api(tags = "block")
 @RestController

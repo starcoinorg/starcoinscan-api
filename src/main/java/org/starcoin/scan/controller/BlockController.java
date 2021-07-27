@@ -2,10 +2,10 @@ package org.starcoin.scan.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.starcoin.api.Result;
 import org.starcoin.bean.Block;
 import org.starcoin.bean.UncleBlock;
 import org.starcoin.scan.service.BlockService;
-import org.starcoin.scan.service.Result;
 
 @RestController
 @RequestMapping("v1/block")
