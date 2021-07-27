@@ -33,7 +33,7 @@ public class BlockService {
     private RestHighLevelClient client;
 
     public Block getBlock(String network, String id) throws IOException {
-        GetRequest getRequest = new GetRequest(ServiceUtils.getIndex(network, Constant.BLOCK_INDEX), id);
+        GetRequest getRequest = new GetRequest(ServiceUtils.getIndex(network, Constant.BLOCK_IDS_INDEX), id);
         GetResponse getResponse = client.get(getRequest, RequestOptions.DEFAULT);
         Block block = new Block();
         if (getResponse.isExists()) {
@@ -91,8 +91,17 @@ public class BlockService {
         return null;
     }
 
-    public Result<Block> getRange(String network, int page, int count, int start_height) {
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.BLOCK_INDEX));
+    public Result<Block> getBlockRange(String network,  int page, int count, int start_height) {
+        return getRangeResult(network, Constant.BLOCK_INDEX, page, count, start_height, "header.number", Block.class);
+    }
+
+    public Result<Block> getBlockIdsRange(String network,  int page, int count, int start_height) {
+        return getRangeResult(network, Constant.BLOCK_IDS_INDEX, page, count, start_height, "header.number", Block.class);
+    }
+
+    private <T> Result<T> getRangeResult(String network, String indexName, int page, int count, int start_height,
+                                         String sortField, Class<T> clazz) {
+        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, indexName));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.matchAllQuery());
         //page size
@@ -108,7 +117,7 @@ public class BlockService {
                 searchSourceBuilder.from(offset);
             }
         }
-        searchSourceBuilder.sort("header.number", SortOrder.DESC);
+        searchSourceBuilder.sort(sortField, SortOrder.DESC);
         searchSourceBuilder.trackTotalHits(true);
         searchRequest.source(searchSourceBuilder);
         SearchResponse searchResponse;
@@ -118,7 +127,7 @@ public class BlockService {
             logger.error("get range block error:", e);
             return null;
         }
-        return ServiceUtils.getSearchResult(searchResponse, Block.class);
+        return ServiceUtils.getSearchResult(searchResponse, clazz);
     }
 
     public UncleBlock getUncleBlockByHeight(String network, long height) {
@@ -168,33 +177,7 @@ public class BlockService {
     }
 
     public Result<UncleBlock> getUnclesRange(String network, int page, int count, int start_height) {
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.UNCLE_BLOCK_INDEX));
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(QueryBuilders.matchAllQuery());
-        //page size
-        searchSourceBuilder.size(count);
-        //begin offset
-        int offset;
-        if (page > 1) {
-            offset = (page - 1) * count;
-            if (offset >= ELASTICSEARCH_MAX_HITS && start_height > 0) {
-                offset = start_height - (page - 1) * count;
-                searchSourceBuilder.searchAfter(new Object[]{offset});
-            } else {
-                searchSourceBuilder.from(offset);
-            }
-        }
-        searchSourceBuilder.sort("uncle_block_number", SortOrder.DESC);
-        searchSourceBuilder.trackTotalHits(true);
-        searchRequest.source(searchSourceBuilder);
-        SearchResponse searchResponse;
-        try {
-            searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-        } catch (IOException e) {
-            logger.error("get uncle range error:", e);
-            return null;
-        }
-        return ServiceUtils.getSearchResult(searchResponse, UncleBlock.class);
+        return getRangeResult(network, Constant.UNCLE_BLOCK_INDEX, page, count, start_height, "uncle_block_number", UncleBlock.class);
     }
 
 

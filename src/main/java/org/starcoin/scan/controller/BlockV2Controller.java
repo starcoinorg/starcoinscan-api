@@ -39,7 +39,15 @@ public class BlockV2Controller {
     public Result<Block> getRangeBlocks(@PathVariable("network") String network, @PathVariable("page") int page,
                                         @RequestParam(value = "count", required = false, defaultValue = "20") int count,
                                         @RequestParam(value = "total", required = false, defaultValue = "0") int start_height) {
-        return blockService.getRange(network, page, count, start_height);
+        return blockService.getBlockRange(network, page, count, start_height);
+    }
+
+    @ApiOperation("get block header list")
+    @GetMapping("/header/{network}/page/{page}")
+    public Result<Block> getHeaderRange(@PathVariable("network") String network, @PathVariable("page") int page,
+                                        @RequestParam(value = "count", required = false, defaultValue = "20") int count,
+                                        @RequestParam(value = "total", required = false, defaultValue = "0") int start_height) {
+        return blockService.getBlockIdsRange(network, page, count, start_height);
     }
 
     @ApiOperation("get uncle block list")
