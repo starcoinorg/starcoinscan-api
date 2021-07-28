@@ -1,6 +1,7 @@
 package org.starcoin.scan.service;
 
-import org.starcoin.bean.*;
+import org.starcoin.bean.Event;
+import org.starcoin.bean.Transaction;
 
 import java.util.List;
 
