@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.starcoin.api.Result;
 import org.starcoin.bean.Event;
 import org.starcoin.bean.PendingTransaction;
-import org.starcoin.bean.Transaction;
 import org.starcoin.scan.constant.Constant;
 import org.starcoin.types.AccountAddress;
 import org.starcoin.types.event.ProposalCreatedEvent;
@@ -31,7 +30,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.starcoin.scan.service.ServiceUtils.*;
+import static org.starcoin.scan.service.ServiceUtils.ELASTICSEARCH_MAX_HITS;
+import static org.starcoin.scan.service.ServiceUtils.getSearchUnescapeResult;
 import static org.starcoin.scan.utils.CommonUtils.hexToByteArray;
 
 
