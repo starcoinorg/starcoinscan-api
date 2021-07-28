@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.starcoin.api.Result;
 import org.starcoin.bean.Event;
 import org.starcoin.bean.PendingTransaction;
+import org.starcoin.bean.Transfer;
 import org.starcoin.scan.constant.Constant;
 import org.starcoin.types.AccountAddress;
 import org.starcoin.types.event.ProposalCreatedEvent;
@@ -128,6 +129,35 @@ public class TransactionService {
             logger.error("not found transaction, id: {}", id);
             return null;
         }
+    }
+
+    public Result<Transfer> getRangeTransfers(String network, String typeTag, int page, int count) {
+        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSFER_INDEX));
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        //page size
+        searchSourceBuilder.size(count);
+        //begin offset
+        int offset = 0;
+        if (page > 1) {
+            offset = (page - 1) * count;
+            if (offset >= ELASTICSEARCH_MAX_HITS) {
+                searchSourceBuilder.searchAfter(new Object[]{offset});
+            } else {
+                searchSourceBuilder.from(offset);
+            }
+        }
+        searchSourceBuilder.from(offset);
+        searchSourceBuilder.sort("timestamp", SortOrder.DESC);
+        searchSourceBuilder.query(QueryBuilders.matchQuery("type_tag", typeTag));
+        searchRequest.source(searchSourceBuilder);
+        searchSourceBuilder.trackTotalHits(true);
+        SearchResponse searchResponse = null;
+        try {
+            searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            logger.error("get transfer error:", e);
+        }
+        return ServiceUtils.getSearchResult(searchResponse, Transfer.class);
     }
 
     public Result<TransactionWithEvent> getRangeByAddress(String network, String address, int page, int count) throws IOException {
