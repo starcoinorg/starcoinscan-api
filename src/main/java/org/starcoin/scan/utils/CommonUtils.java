@@ -32,8 +32,8 @@ public class CommonUtils {
 
     public static String unescapeEvent(String source) {
         String result = StringEscapeUtils.unescapeJson(source);
-       result = result.replace("\"{\"struct", "{\"struct");
-       result = result.replace("}}\"", "}}");
-       return  result;
+        result = result.replace("\"{\"struct", "{\"struct");
+        result = result.replace("}}\"", "}}");
+        return result;
     }
 }
