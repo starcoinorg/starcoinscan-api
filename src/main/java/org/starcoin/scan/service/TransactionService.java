@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.starcoin.api.Result;
 import org.starcoin.bean.Event;
 import org.starcoin.bean.PendingTransaction;
+import org.starcoin.bean.Transfer;
 import org.starcoin.scan.constant.Constant;
 import org.starcoin.types.AccountAddress;
 import org.starcoin.types.event.ProposalCreatedEvent;
@@ -128,6 +129,46 @@ public class TransactionService {
             logger.error("not found transaction, id: {}", id);
             return null;
         }
+    }
+
+    public Result<Transfer> getRangeTransfers(String network, String typeTag, String receiver, String sender, int page, int count) {
+        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSFER_INDEX));
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        //page size
+        searchSourceBuilder.size(count);
+        //begin offset
+        int offset = 0;
+        if (page > 1) {
+            offset = (page - 1) * count;
+            if (offset >= ELASTICSEARCH_MAX_HITS) {
+                searchSourceBuilder.searchAfter(new Object[]{offset});
+            } else {
+                searchSourceBuilder.from(offset);
+            }
+        }
+        searchSourceBuilder.from(offset);
+        searchSourceBuilder.sort("timestamp", SortOrder.DESC);
+        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+        if (typeTag != null && typeTag.length() > 0) {
+            boolQueryBuilder.must(QueryBuilders.matchQuery("type_tag", typeTag));
+        }
+        if (receiver != null && receiver.length() > 0) {
+            boolQueryBuilder.must(QueryBuilders.matchQuery("receiver", receiver));
+        }
+        if (sender != null && sender.length() > 0) {
+            boolQueryBuilder.must(QueryBuilders.matchQuery("sender", sender));
+        }
+        searchSourceBuilder.query(boolQueryBuilder);
+        searchRequest.source(searchSourceBuilder);
+        searchSourceBuilder.trackTotalHits(true);
+        SearchResponse searchResponse;
+        try {
+            searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            logger.error("get transfer error:", e);
+            return Result.EmptyResult;
+        }
+        return ServiceUtils.getSearchResult(searchResponse, Transfer.class);
     }
 
     public Result<TransactionWithEvent> getRangeByAddress(String network, String address, int page, int count) throws IOException {
@@ -277,22 +318,23 @@ public class TransactionService {
         List<TransactionWithEvent> transactions = result.getContents();
         List<String> txnHashes = new ArrayList<>();
         Map<String, List<Event>> txnEvents = new HashMap<>();
-        for (TransactionWithEvent txn: transactions) {
+        for (TransactionWithEvent txn : transactions) {
             txnHashes.add(txn.getTransactionHash());
             txnEvents.put(txn.getTransactionHash(), new ArrayList<>());
         }
         if (txnHashes.size() > 0) {
             Result<Event> events = getEventsByTransaction(network, txnHashes);
-            for(Event event: events.getContents()) {
+            for (Event event : events.getContents()) {
                 txnEvents.get(event.getTransactionHash()).add(event);
             }
             //set events
-            for (TransactionWithEvent txn: transactions) {
+            for (TransactionWithEvent txn : transactions) {
                 txn.setEvents(txnEvents.get(txn.getTransactionHash()));
             }
         }
         return result;
     }
+
     public Result<Event> getEventsByTransaction(String network, List<String> txnHashes) throws IOException {
         SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_EVENT_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();

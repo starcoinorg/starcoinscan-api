@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import org.starcoin.api.Result;
 import org.starcoin.bean.Event;
 import org.starcoin.bean.PendingTransaction;
+import org.starcoin.bean.Transfer;
 import org.starcoin.scan.service.TransactionService;
 import org.starcoin.scan.service.TransactionWithEvent;
 
@@ -87,4 +88,38 @@ public class TransactionV2Controller {
                                         @RequestParam(value = "count", required = false, defaultValue = "20") int count) throws IOException {
         return transactionService.getEvents(network, tag_name, page, count);
     }
+
+    @ApiOperation("get transfer by token")
+    @GetMapping("{network}/transfer/byTag/{tag_name}/page/{page}")
+    public Result<Transfer> getTransfers(@PathVariable("network") String network, @PathVariable("tag_name") String tag_name,
+                                         @PathVariable(value = "page", required = false) int page,
+                                         @RequestParam(value = "count", required = false, defaultValue = "20") int count) {
+        return transactionService.getRangeTransfers(network, tag_name, null, null, page, count);
+    }
+
+    @ApiOperation("get transfer by sender")
+    @GetMapping("{network}/transfer/sender/{sender}/page/{page}")
+    public Result<Transfer> getTransfersBySender(@PathVariable("network") String network, @PathVariable("sender") String sender,
+                                                 @PathVariable(value = "page", required = false) int page,
+                                                 @RequestParam(value = "count", required = false, defaultValue = "20") int count) {
+        return transactionService.getRangeTransfers(network, null, null, sender, page, count);
+    }
+
+    @ApiOperation("get transfer by receiver")
+    @GetMapping("{network}/transfer/receiver/{receiver}/page/{page}")
+    public Result<Transfer> getTransfersByReceiver(@PathVariable("network") String network, @PathVariable("receiver") String receiver,
+                                                   @PathVariable(value = "page", required = false) int page,
+                                                   @RequestParam(value = "count", required = false, defaultValue = "20") int count) {
+        return transactionService.getRangeTransfers(network, null, receiver, null, page, count);
+    }
+
+    @ApiOperation("get transfer by sender and receiver")
+    @GetMapping("{network}/transfer/conversations/page/{page}")
+    public Result<Transfer> getTransferConversations(@PathVariable("network") String network, @RequestParam("receiver") String receiver,
+                                                     @RequestParam("sender") String sender,
+                                                     @PathVariable(value = "page", required = false) int page,
+                                                     @RequestParam(value = "count", required = false, defaultValue = "20") int count) {
+        return transactionService.getRangeTransfers(network, null, receiver, sender, page, count);
+    }
+
 }
