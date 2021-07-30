@@ -69,7 +69,7 @@ public class BlockService {
     }
 
     public Block getBlockByHeight(String network, long height) {
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.BLOCK_INDEX));
+        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.BLOCK_IDS_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("header.number", height);
         searchSourceBuilder.query(termQueryBuilder);
@@ -84,7 +84,7 @@ public class BlockService {
         Result<Block> result = ServiceUtils.getSearchResult(searchResponse, Block.class);
         List<Block> blocks = result.getContents();
         if (blocks.size() == 1) {
-            return blocks.get(0);
+            return getBlockByHash(network, blocks.get(0).getHeader().getBlockHash());
         } else {
             logger.warn("get block by height is null, network: {}, : {}", network, height);
         }
