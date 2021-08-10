@@ -7,6 +7,7 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.BucketOrder;
@@ -27,6 +28,7 @@ import org.starcoin.scan.bean.TokenStatistic;
 import org.starcoin.scan.constant.Constant;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -222,8 +224,56 @@ public class TokenService {
         return result;
     }
 
-    public  Result<TokenHolderInfo> getHoldersByToken(String network, int page, int count, String tokenType){
-        return null;
+    public  Result<TokenHolderInfo> getHoldersByToken(String network, int page, int count, String tokenType) throws IOException {
+        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.ADDRESS_INDEX));
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.size(count);
+        //begin offset
+        int offset = 0;
+        if (page > 1) {
+            offset = (page - 1) * count;
+        }
+        searchSourceBuilder.from(offset);
+
+        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("type_tag", tokenType);
+
+        searchSourceBuilder.query(termQueryBuilder);
+        searchRequest.source(searchSourceBuilder);
+        searchSourceBuilder.trackTotalHits(true);
+        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        Result<TokenHolderInfo> result = ServiceUtils.getSearchResult(searchResponse, TokenHolderInfo.class);
+        
+        Result<TokenStatistic> tokenStatisticResult = this.tokenMarketCap(network,tokenType);
+        if(tokenStatisticResult.getContents()!=null&&tokenStatisticResult.getContents().size()>0){
+            TokenStatistic tokenStatistic = tokenStatisticResult.getContents().get(0);
+            BigInteger totalSupply = BigInteger.valueOf((new Double(tokenStatistic.getMarketCap())).longValue());
+            for(TokenHolderInfo info:result.getContents()){
+                info.setSupply(totalSupply);
+            }
+        }
+        return result;
+    }
+
+    public Result<TokenStatistic> tokenMarketCap(String network, String tokenType) {
+        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.MARKET_CAP_INDEX));
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
+        queryBuilder
+                .must(QueryBuilders.matchAllQuery());
+        searchSourceBuilder.query(queryBuilder);
+
+        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("type_tag", tokenType);
+
+        searchSourceBuilder.query(termQueryBuilder);
+        searchRequest.source(searchSourceBuilder);
+        searchSourceBuilder.trackTotalHits(true);
+
+        try {
+            return ServiceUtils.getSearchResult(client.search(searchRequest, RequestOptions.DEFAULT), TokenStatistic.class);
+        } catch (IOException e) {
+            logger.error("get token market cap error:", e);
+            return null;
+        }
     }
 
     enum StatisticType {

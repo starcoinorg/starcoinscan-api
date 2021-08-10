@@ -10,6 +10,8 @@ import org.starcoin.scan.bean.TokenHolderInfo;
 import org.starcoin.scan.bean.TokenStatistic;
 import org.starcoin.scan.service.TokenService;
 
+import java.io.IOException;
+
 @Api(tags = "token")
 @RestController
 @RequestMapping("v2/token")
@@ -28,16 +30,8 @@ public class TokenController {
     @GetMapping("/{network}/holders/page/{page}")
     public Result<TokenHolderInfo> getHoldersByToken(@PathVariable("network") String network, @PathVariable("page") int page,
                                                      @RequestParam(value = "count", required = false, defaultValue = "20") int count,
-                                                     @RequestParam("token_type") String tokenType) {
-        return null;
-    }
-
-    @ApiOperation("get token volume list")
-    @GetMapping("/{network}/volume/page/{page}")
-    public Result<Transaction> getTransferByToken(@PathVariable("network") String network, @PathVariable("page") int page,
-                                                  @RequestParam(value = "count", required = false, defaultValue = "20") int count,
-                                                  @RequestParam("token_type") String tokenType) {
-        return null;
+                                                     @RequestParam("token_type") String tokenType) throws IOException {
+        return tokenService.getHoldersByToken(network,page,count,tokenType);
     }
 
 }
