@@ -19,7 +19,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.starcoin.api.Result;
+import org.starcoin.scan.bean.TokenHolderInfo;
 import org.starcoin.scan.bean.TokenStatistic;
 import org.starcoin.scan.constant.Constant;
 
@@ -217,6 +220,10 @@ public class TokenService {
         }
         result.setContents(statistics);
         return result;
+    }
+
+    public  Result<TokenHolderInfo> getHoldersByToken(String network, int page, int count, String tokenType){
+        return null;
     }
 
     enum StatisticType {
