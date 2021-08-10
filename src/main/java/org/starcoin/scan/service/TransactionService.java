@@ -11,6 +11,9 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.search.aggregations.Aggregation;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.metrics.ParsedValueCount;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.slf4j.Logger;
@@ -21,15 +24,13 @@ import org.starcoin.api.Result;
 import org.starcoin.bean.Event;
 import org.starcoin.bean.PendingTransaction;
 import org.starcoin.bean.Transfer;
+import org.starcoin.scan.bean.TokenTransfer;
 import org.starcoin.scan.constant.Constant;
 import org.starcoin.types.AccountAddress;
 import org.starcoin.types.event.ProposalCreatedEvent;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.starcoin.scan.service.ServiceUtils.ELASTICSEARCH_MAX_HITS;
 import static org.starcoin.scan.service.ServiceUtils.getSearchUnescapeResult;
@@ -169,6 +170,39 @@ public class TransactionService {
             return Result.EmptyResult;
         }
         return ServiceUtils.getSearchResult(searchResponse, Transfer.class);
+    }
+
+    public Result<TokenTransfer> getTransferCount(String network, String typeTag) {
+        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSFER_INDEX));
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.size(0);
+        searchSourceBuilder.from(0);
+        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+        if (typeTag != null && typeTag.length() > 0) {
+            boolQueryBuilder.must(QueryBuilders.matchQuery("type_tag", typeTag));
+        }
+        searchSourceBuilder.aggregation(AggregationBuilders.count("token_count").field("type_tag.keyword"));
+        searchSourceBuilder.query(boolQueryBuilder);
+        searchRequest.source(searchSourceBuilder);
+
+        searchSourceBuilder.trackTotalHits(true);
+        SearchResponse searchResponse;
+        TokenTransfer tokenTransfer = new TokenTransfer();
+        Result<TokenTransfer> result = new Result<>();
+        try {
+            searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+            Map<String, Aggregation> aggMap = searchResponse.getAggregations().asMap();
+            Aggregation aggregation = aggMap.get("token_count");
+            if (aggregation instanceof ParsedValueCount) {
+                tokenTransfer.setTransfers(((ParsedValueCount) aggregation).getValue());
+                tokenTransfer.setTypeTag(typeTag);
+                result.setContents(Collections.singletonList(tokenTransfer));
+            }
+        } catch (IOException e) {
+            logger.error("get transfer error:", e);
+            return Result.EmptyResult;
+        }
+        return result;
     }
 
     public Result<TransactionWithEvent> getRangeByAddress(String network, String address, int page, int count) throws IOException {
