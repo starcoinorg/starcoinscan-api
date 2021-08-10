@@ -1,11 +1,15 @@
 package org.starcoin.scan.bean;
 
+import com.alibaba.fastjson.annotation.JSONField;
+
 import java.math.BigInteger;
 
 public class TokenHolderInfo {
 
     private String address;
     private BigInteger supply;
+
+    @JSONField(name ="amount")
     private BigInteger holdAmount;
 
     public String getAddress() {

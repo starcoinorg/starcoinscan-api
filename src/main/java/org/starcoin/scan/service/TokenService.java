@@ -235,7 +235,7 @@ public class TokenService {
         }
         searchSourceBuilder.from(offset);
 
-        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("type_tag", tokenType);
+        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("type_tag.keyword", tokenType);
 
         searchSourceBuilder.query(termQueryBuilder);
         searchRequest.source(searchSourceBuilder);
@@ -262,7 +262,7 @@ public class TokenService {
                 .must(QueryBuilders.matchAllQuery());
         searchSourceBuilder.query(queryBuilder);
 
-        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("type_tag", tokenType);
+        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("type_tag.keyword", tokenType);
 
         searchSourceBuilder.query(termQueryBuilder);
         searchRequest.source(searchSourceBuilder);
