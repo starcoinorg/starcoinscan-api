@@ -242,7 +242,7 @@ public class TokenService {
         searchSourceBuilder.trackTotalHits(true);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
         Result<TokenHolderInfo> result = ServiceUtils.getSearchResult(searchResponse, TokenHolderInfo.class);
-        
+
         Result<TokenStatistic> tokenStatisticResult = this.tokenMarketCap(network,tokenType);
         if(tokenStatisticResult.getContents()!=null&&tokenStatisticResult.getContents().size()>0){
             TokenStatistic tokenStatistic = tokenStatisticResult.getContents().get(0);

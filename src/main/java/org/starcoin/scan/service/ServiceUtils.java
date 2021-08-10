@@ -14,7 +14,7 @@ public class ServiceUtils {
     public static final String withdrawEvent = "WithdrawEvent";
     public static final String proposalCreatedEvent = "ProposalCreatedEvent";
     public static final int ELASTICSEARCH_MAX_HITS = 10000;
-    private static final String indexVersion = ".0727";
+    private static final String indexVersion = "";
 
     public static String getIndex(String network, String indexConstant) {
         return network + indexVersion + "." + indexConstant;
