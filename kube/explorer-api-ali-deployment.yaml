@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: explorer-new-api
-          image: starcoin/starcoin_scan:sha-f283a9c
+          image: starcoin/starcoin_scan:sha-72e0aeb
           ports:
             - containerPort: 8500
           env:
@@ -28,6 +28,8 @@ spec:
               value: "9200"
             - name: STARCOIN_ES_USER
               value: elastic
+            - name: STARCOIN_ES_INDEX_VERSION
+              value:
             - name: STARCOIN_ES_PWD
               valueFrom:
                 secretKeyRef:

@@ -20,8 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.starcoin.api.Result;
 import org.starcoin.scan.bean.TokenHolderInfo;
 import org.starcoin.scan.bean.TokenStatistic;
@@ -38,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 import static org.starcoin.scan.service.ServiceUtils.ELASTICSEARCH_MAX_HITS;
 
 @Service
-public class TokenService {
+public class TokenService extends BaseService {
     private static final Logger logger = LoggerFactory.getLogger(TokenService.class);
 
     @Autowired
@@ -96,7 +94,7 @@ public class TokenService {
     }
 
     public Result<TokenStatistic> tokenHolderList(String network, int page, int count) {
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.ADDRESS_INDEX));
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.ADDRESS_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 
         searchSourceBuilder.query(QueryBuilders.matchAllQuery());
@@ -130,7 +128,7 @@ public class TokenService {
     }
 
     public Result<TokenStatistic> tokenMarketCap(String network, int page, int count) {
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.MARKET_CAP_INDEX));
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.MARKET_CAP_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
         queryBuilder
@@ -160,7 +158,7 @@ public class TokenService {
     }
 
     public Result<TokenStatistic> tokenVolumeList(String network, int page, int count) {
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSFER_JOURNAL_INDEX));
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.TRANSFER_JOURNAL_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
         queryBuilder
@@ -225,7 +223,7 @@ public class TokenService {
     }
 
     public  Result<TokenHolderInfo> getHoldersByToken(String network, int page, int count, String tokenType) throws IOException {
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.ADDRESS_INDEX));
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.ADDRESS_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.size(count);
         //begin offset
@@ -255,7 +253,7 @@ public class TokenService {
     }
 
     public Result<TokenStatistic> tokenMarketCap(String network, String tokenType) {
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.MARKET_CAP_INDEX));
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.MARKET_CAP_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
         queryBuilder
