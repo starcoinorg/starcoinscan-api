@@ -20,10 +20,16 @@ public class TokenController {
     private TokenService tokenService;
 
     @ApiOperation("get token aggregate stat list")
-    @GetMapping("/{network}/token/stats/{page}")
+    @GetMapping("/{network}/stats/{page}")
     public Result<TokenStatistic> getAggregate(@PathVariable("network") String network, @PathVariable("page") int page,
                                                @RequestParam(value = "count", required = false, defaultValue = "20") int count) {
         return tokenService.tokenAggregateList(network, page, count);
+    }
+
+    @ApiOperation("get token aggregate info")
+    @GetMapping("/{network}/info/{token}")
+    public Result<TokenStatistic> tokenInfoAggregate(@PathVariable("network") String network, @PathVariable(value = "token", required = true) String token) {
+        return tokenService.tokenInfoAggregate(network, token);
     }
 
     @ApiOperation("get token holders list")

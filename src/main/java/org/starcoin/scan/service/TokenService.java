@@ -93,6 +93,70 @@ public class TokenService extends BaseService {
         return volumeMap;
     }
 
+    public Result<TokenStatistic> tokenInfoAggregate(String network, String token) {
+        if(token == null || token.length() == 0) {
+            return null;
+        }
+        Result<TokenStatistic> result = new Result<>();
+        //get volume info
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.TRANSFER_JOURNAL_INDEX));
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
+        queryBuilder
+                .must(QueryBuilders.rangeQuery("amount").gt(0))
+                .must(QueryBuilders.termQuery("type_tag.keyword", token));
+        searchSourceBuilder.query(queryBuilder);
+        TermsAggregationBuilder aggregationBuilder = AggregationBuilders.terms("token_stat")
+                .field("type_tag.keyword")
+                .order(BucketOrder.aggregation("amounts", false))
+                .subAggregation(AggregationBuilders.dateRange("date_range").field("timestamp").addRange("now/d-1d", "now/d"))
+                .subAggregation(AggregationBuilders.sum("amounts").field("amount"));
+
+        searchSourceBuilder.from(0);
+        searchSourceBuilder.aggregation(aggregationBuilder);
+        searchSourceBuilder.trackTotalHits(true);
+        searchRequest.source(searchSourceBuilder);
+        searchSourceBuilder.timeout(new TimeValue(20, TimeUnit.SECONDS));
+
+        try {
+            result = searchStatistic(client.search(searchRequest, RequestOptions.DEFAULT), StatisticType.Volumes);
+        } catch (IOException e) {
+            logger.error("get token volume error:", e);
+            return null;
+        }
+       // get market cap
+        Result<TokenStatistic> result2 = new Result<>();
+        searchRequest = new SearchRequest(getIndex(network, Constant.MARKET_CAP_INDEX));
+        searchSourceBuilder = new SearchSourceBuilder();
+        queryBuilder = QueryBuilders.boolQuery();
+        queryBuilder
+                .must(QueryBuilders.termsQuery("type_tag.keyword", token));
+        searchSourceBuilder.query(queryBuilder);
+        searchSourceBuilder.from(0);
+        searchSourceBuilder.trackTotalHits(true);
+        searchRequest.source(searchSourceBuilder);
+        searchSourceBuilder.timeout(new TimeValue(20, TimeUnit.SECONDS));
+
+        try {
+            result2 = ServiceUtils.getSearchResult(client.search(searchRequest, RequestOptions.DEFAULT), TokenStatistic.class);
+        } catch (IOException e) {
+            logger.error("get token market cap error:", e);
+            return null;
+        }
+        //aggregate result
+        TokenStatistic tokenStatistic1 = new TokenStatistic();
+        if(result.getContents().isEmpty()) {
+            return result2;
+        }
+        tokenStatistic1 = result.getContents().get(0);
+        if(!result2.getContents().isEmpty()) {
+            TokenStatistic tokenStatistic2 = result2.getContents().get(0);
+            tokenStatistic1.setMarketCap(tokenStatistic2.getMarketCap());
+            result.getContents().set(0, tokenStatistic1);
+        }
+        return result;
+    }
+
     public Result<TokenStatistic> tokenHolderList(String network, int page, int count) {
         SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.ADDRESS_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
