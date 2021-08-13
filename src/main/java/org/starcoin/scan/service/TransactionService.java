@@ -50,16 +50,37 @@ public class TransactionService extends BaseService {
         if (getResponse.isExists()) {
             String sourceAsString = getResponse.getSourceAsString();
             TransactionWithEvent transaction = JSON.parseObject(sourceAsString, TransactionWithEvent.class);
-            //get events
-            List<String> txnHashes = new ArrayList<>();
-            txnHashes.add(transaction.getTransactionHash());
-            Result<Event> events = getEventsByTransaction(network, txnHashes);
-            transaction.setEvents(events.getContents());
-            return transaction;
+            // is not forked block
+            if(isNotForkedBlock(network, transaction.getBlockHash())) {
+                //get events
+                List<String> txnHashes = new ArrayList<>();
+                txnHashes.add(transaction.getTransactionHash());
+                Result<Event> events = getEventsByTransaction(network, txnHashes);
+                transaction.setEvents(events.getContents());
+                return transaction;
+            }else {
+                logger.warn("is forked block txns: {}", id);
+                return null;
+            }
         } else {
             logger.error("not found transaction, id: {}", id);
             return null;
         }
+    }
+    private boolean isNotForkedBlock(String network, String blockHash) {
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.BLOCK_IDS_INDEX));
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("header.block_hash", blockHash);
+        searchSourceBuilder.query(termQueryBuilder);
+        searchRequest.source(searchSourceBuilder);
+        SearchResponse searchResponse;
+        try {
+            searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            logger.error("get master block by hash error:", e);
+            return false;
+        }
+        return searchResponse.getHits().getHits().length> 0;
     }
 
     public TransactionWithEvent getTransactionByHash(String network, String hash) throws IOException {
