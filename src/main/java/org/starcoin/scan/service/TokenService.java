@@ -51,13 +51,13 @@ public class TokenService extends BaseService {
         }
         //get volume
         Result<TokenStatistic> volumes = tokenVolumeList(network, page, count);
-        Map<String, Double> volumeMap = getVolumeMap(volumes);
+        Map<String, Long> volumeMap = getVolumeMap(volumes);
         //get market cap
         Result<TokenStatistic> market = tokenMarketCap(network, page, count);
         Map<String, Double> marketMap = getMarketMap(market);
         for (TokenStatistic tokenStatistic : holderContents) {
             String typeTag = tokenStatistic.getTypeTag();
-            Double volume = volumeMap.get(typeTag);
+            Long volume = volumeMap.get(typeTag);
             if (volume != null) {
                 tokenStatistic.setVolume(volume);
             }
@@ -81,8 +81,8 @@ public class TokenService extends BaseService {
         return marketMap;
     }
 
-    private Map<String, Double> getVolumeMap(Result<TokenStatistic> volumes) {
-        Map<String, Double> volumeMap = new HashMap<>();
+    private Map<String, Long> getVolumeMap(Result<TokenStatistic> volumes) {
+        Map<String, Long> volumeMap = new HashMap<>();
         List<TokenStatistic> volumeContents = volumes.getContents();
         if (volumeContents.isEmpty()) {
             return volumeMap;
@@ -276,7 +276,8 @@ public class TokenService extends BaseService {
                 } else if (statisticType == StatisticType.Volumes) {
                     Aggregation amountAgg = ((ParsedStringTerms.ParsedBucket) elasticBucket).getAggregations().get("amounts");
                     if (amountAgg instanceof ParsedSum) {
-                        statistic.setVolume(((ParsedSum) amountAgg).getValue());
+                        Double value = ((ParsedSum) amountAgg).getValue();
+                        statistic.setVolume(value.longValue());
                     }
                 }
                 statistics.add(statistic);

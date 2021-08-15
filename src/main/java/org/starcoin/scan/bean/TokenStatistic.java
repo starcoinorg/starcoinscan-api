@@ -8,7 +8,7 @@ public class TokenStatistic {
 
     private long addressHolder;
 
-    private double volume;
+    private long volume;
 
     @JSONField(name = "market_cap")
     private double marketCap;
@@ -29,11 +29,11 @@ public class TokenStatistic {
         this.addressHolder = addressHolder;
     }
 
-    public double getVolume() {
+    public long getVolume() {
         return volume;
     }
 
-    public void setVolume(double volume) {
+    public void setVolume(long volume) {
         this.volume = volume;
     }
 
