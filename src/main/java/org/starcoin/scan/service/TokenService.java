@@ -94,7 +94,7 @@ public class TokenService extends BaseService {
     }
 
     public Result<TokenStatistic> tokenInfoAggregate(String network, String token) {
-        if(token == null || token.length() == 0) {
+        if (token == null || token.length() == 0) {
             return null;
         }
         Result<TokenStatistic> result = new Result<>();
@@ -122,9 +122,8 @@ public class TokenService extends BaseService {
             result = searchStatistic(client.search(searchRequest, RequestOptions.DEFAULT), StatisticType.Volumes);
         } catch (IOException e) {
             logger.error("get token volume error:", e);
-            return null;
         }
-       // get market cap
+        // get market cap
         Result<TokenStatistic> result2 = new Result<>();
         searchRequest = new SearchRequest(getIndex(network, Constant.MARKET_CAP_INDEX));
         searchSourceBuilder = new SearchSourceBuilder();
@@ -141,19 +140,30 @@ public class TokenService extends BaseService {
             result2 = ServiceUtils.getSearchResult(client.search(searchRequest, RequestOptions.DEFAULT), TokenStatistic.class);
         } catch (IOException e) {
             logger.error("get token market cap error:", e);
-            return null;
+        }
+        // get holder
+        TokenStatistic tokenStatistic3 = new TokenStatistic();
+        searchRequest = new SearchRequest(getIndex(network, Constant.ADDRESS_INDEX));
+        searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.query(QueryBuilders.termQuery("type_tag.keyword", token));
+        searchSourceBuilder.aggregation(AggregationBuilders.count("address_holders").field("address.keyword"));
+        searchSourceBuilder.timeout(new TimeValue(10, TimeUnit.SECONDS));
+        searchRequest.source(searchSourceBuilder);
+        try {
+            SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+            tokenStatistic3.setAddressHolder(searchResponse.getHits().getTotalHits().value);
+        } catch (IOException e) {
+            logger.error("get token holder error:", e);
         }
         //aggregate result
         TokenStatistic tokenStatistic1 = new TokenStatistic();
-        if(result.getContents().isEmpty()) {
-            return result2;
-        }
         tokenStatistic1 = result.getContents().get(0);
-        if(!result2.getContents().isEmpty()) {
+        if (!result2.getContents().isEmpty()) {
             TokenStatistic tokenStatistic2 = result2.getContents().get(0);
             tokenStatistic1.setMarketCap(tokenStatistic2.getMarketCap());
-            result.getContents().set(0, tokenStatistic1);
         }
+        tokenStatistic1.setAddressHolder(tokenStatistic3.getAddressHolder());
+        result.getContents().set(0, tokenStatistic1);
         return result;
     }
 
@@ -287,7 +297,7 @@ public class TokenService extends BaseService {
         return result;
     }
 
-    public  Result<TokenHolderInfo> getHoldersByToken(String network, int page, int count, String tokenType) throws IOException {
+    public Result<TokenHolderInfo> getHoldersByToken(String network, int page, int count, String tokenType) throws IOException {
         SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.ADDRESS_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.size(count);
@@ -306,11 +316,11 @@ public class TokenService extends BaseService {
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
         Result<TokenHolderInfo> result = ServiceUtils.getSearchResult(searchResponse, TokenHolderInfo.class);
 
-        Result<TokenStatistic> tokenStatisticResult = this.tokenMarketCap(network,tokenType);
-        if(tokenStatisticResult.getContents()!=null&&tokenStatisticResult.getContents().size()>0){
+        Result<TokenStatistic> tokenStatisticResult = this.tokenMarketCap(network, tokenType);
+        if (tokenStatisticResult.getContents() != null && tokenStatisticResult.getContents().size() > 0) {
             TokenStatistic tokenStatistic = tokenStatisticResult.getContents().get(0);
             BigInteger totalSupply = BigInteger.valueOf((new Double(tokenStatistic.getMarketCap())).longValue());
-            for(TokenHolderInfo info:result.getContents()){
+            for (TokenHolderInfo info : result.getContents()) {
                 info.setSupply(totalSupply);
             }
         }

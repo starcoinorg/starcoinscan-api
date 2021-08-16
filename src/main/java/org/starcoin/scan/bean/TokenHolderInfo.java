@@ -9,7 +9,7 @@ public class TokenHolderInfo {
     private String address;
     private BigInteger supply;
 
-    @JSONField(name ="amount")
+    @JSONField(name = "amount")
     private BigInteger holdAmount;
 
     public String getAddress() {
