@@ -26,14 +26,14 @@ import java.util.List;
 import static org.starcoin.scan.service.ServiceUtils.ELASTICSEARCH_MAX_HITS;
 
 @Service
-public class BlockService {
+public class BlockService extends BaseService {
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
     @Autowired
     private RestHighLevelClient client;
 
     public Block getBlock(String network, String id) throws IOException {
-        GetRequest getRequest = new GetRequest(ServiceUtils.getIndex(network, Constant.BLOCK_INDEX), id);
+        GetRequest getRequest = new GetRequest(getIndex(network, Constant.BLOCK_INDEX), id);
         GetResponse getResponse = client.get(getRequest, RequestOptions.DEFAULT);
         Block block = new Block();
         if (getResponse.isExists()) {
@@ -46,7 +46,7 @@ public class BlockService {
     }
 
     public Block getBlockByHash(String network, String hash) {
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.BLOCK_INDEX));
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.BLOCK_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("header.block_hash", hash);
         searchSourceBuilder.query(termQueryBuilder);
@@ -69,7 +69,7 @@ public class BlockService {
     }
 
     public Block getBlockByHeight(String network, long height) {
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.BLOCK_IDS_INDEX));
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.BLOCK_IDS_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("header.number", height);
         searchSourceBuilder.query(termQueryBuilder);
@@ -92,7 +92,7 @@ public class BlockService {
     }
 
     public Result<Block> getRange(String network, int page, int count, int start_height) {
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.BLOCK_INDEX));
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.BLOCK_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.matchAllQuery());
         //page size
@@ -122,7 +122,7 @@ public class BlockService {
     }
 
     public UncleBlock getUncleBlockByHeight(String network, long height) {
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.UNCLE_BLOCK_INDEX));
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.UNCLE_BLOCK_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("header.number", height);
         searchSourceBuilder.query(termQueryBuilder);
@@ -145,7 +145,7 @@ public class BlockService {
     }
 
     public UncleBlock getUncleBlockByHash(String network, String hash) {
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.UNCLE_BLOCK_INDEX));
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.UNCLE_BLOCK_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("header.block_hash", hash);
         searchSourceBuilder.query(termQueryBuilder);
@@ -168,7 +168,7 @@ public class BlockService {
     }
 
     public Result<UncleBlock> getUnclesRange(String network, int page, int count, int start_height) {
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.UNCLE_BLOCK_INDEX));
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.UNCLE_BLOCK_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.matchAllQuery());
         //page size

@@ -8,6 +8,7 @@ import org.starcoin.api.Result;
 import org.starcoin.bean.Event;
 import org.starcoin.bean.PendingTransaction;
 import org.starcoin.bean.Transfer;
+import org.starcoin.scan.bean.TokenTransfer;
 import org.starcoin.scan.service.TransactionService;
 import org.starcoin.scan.service.TransactionWithEvent;
 
@@ -95,6 +96,13 @@ public class TransactionV2Controller {
                                          @PathVariable(value = "page", required = false) int page,
                                          @RequestParam(value = "count", required = false, defaultValue = "20") int count) {
         return transactionService.getRangeTransfers(network, tag_name, null, null, page, count);
+    }
+
+    @ApiOperation("get transfers count by token")
+    @GetMapping("{network}/transfer/count/byTag/{tag_name}")
+    public Result<TokenTransfer> getTransferCount(@PathVariable("network") String network, @PathVariable("tag_name") String tag_name
+    ) {
+        return transactionService.getTransferCount(network, tag_name);
     }
 
     @ApiOperation("get transfer by sender")

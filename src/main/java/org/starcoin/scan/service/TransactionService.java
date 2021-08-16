@@ -11,6 +11,9 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.search.aggregations.Aggregation;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.metrics.ParsedValueCount;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.slf4j.Logger;
@@ -21,15 +24,13 @@ import org.starcoin.api.Result;
 import org.starcoin.bean.Event;
 import org.starcoin.bean.PendingTransaction;
 import org.starcoin.bean.Transfer;
+import org.starcoin.scan.bean.TokenTransfer;
 import org.starcoin.scan.constant.Constant;
 import org.starcoin.types.AccountAddress;
 import org.starcoin.types.event.ProposalCreatedEvent;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.starcoin.scan.service.ServiceUtils.ELASTICSEARCH_MAX_HITS;
 import static org.starcoin.scan.service.ServiceUtils.getSearchUnescapeResult;
@@ -37,28 +38,50 @@ import static org.starcoin.scan.utils.CommonUtils.hexToByteArray;
 
 
 @Service
-public class TransactionService {
+public class TransactionService extends BaseService {
     private static final Logger logger = LoggerFactory.getLogger(TransactionService.class);
 
     @Autowired
     private RestHighLevelClient client;
 
     public TransactionWithEvent get(String network, String id) throws IOException {
-        GetRequest getRequest = new GetRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_INDEX), id);
+        GetRequest getRequest = new GetRequest(getIndex(network, Constant.TRANSACTION_INDEX), id);
         GetResponse getResponse = client.get(getRequest, RequestOptions.DEFAULT);
         if (getResponse.isExists()) {
             String sourceAsString = getResponse.getSourceAsString();
             TransactionWithEvent transaction = JSON.parseObject(sourceAsString, TransactionWithEvent.class);
-            //get events
-            List<String> txnHashes = new ArrayList<>();
-            txnHashes.add(transaction.getTransactionHash());
-            Result<Event> events = getEventsByTransaction(network, txnHashes);
-            transaction.setEvents(events.getContents());
-            return transaction;
+            // is not forked block
+            if (isNotForkedBlock(network, transaction.getBlockHash())) {
+                //get events
+                List<String> txnHashes = new ArrayList<>();
+                txnHashes.add(transaction.getTransactionHash());
+                Result<Event> events = getEventsByTransaction(network, txnHashes);
+                transaction.setEvents(events.getContents());
+                return transaction;
+            } else {
+                logger.warn("is forked block txns: {}", id);
+                return null;
+            }
         } else {
             logger.error("not found transaction, id: {}", id);
             return null;
         }
+    }
+
+    private boolean isNotForkedBlock(String network, String blockHash) {
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.BLOCK_IDS_INDEX));
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("header.block_hash", blockHash);
+        searchSourceBuilder.query(termQueryBuilder);
+        searchRequest.source(searchSourceBuilder);
+        SearchResponse searchResponse;
+        try {
+            searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            logger.error("get master block by hash error:", e);
+            return false;
+        }
+        return searchResponse.getHits().getHits().length > 0;
     }
 
     public TransactionWithEvent getTransactionByHash(String network, String hash) throws IOException {
@@ -66,7 +89,7 @@ public class TransactionService {
     }
 
     public Result<TransactionWithEvent> getRange(String network, int page, int count, int start_height, int txnType) throws IOException {
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_INDEX));
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.TRANSACTION_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         if (txnType == 0)//
             searchSourceBuilder.query(QueryBuilders.matchAllQuery());
@@ -94,7 +117,7 @@ public class TransactionService {
     }
 
     public Result<PendingTransaction> getRangePendingTransaction(String network, int page, int count, int start_height) throws IOException {
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.PendingTxnIndex));
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.PendingTxnIndex));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.matchAllQuery());
 
@@ -120,7 +143,7 @@ public class TransactionService {
     }
 
     public PendingTransaction getPending(String network, String id) throws IOException {
-        GetRequest getRequest = new GetRequest(ServiceUtils.getIndex(network, Constant.PendingTxnIndex), id);
+        GetRequest getRequest = new GetRequest(getIndex(network, Constant.PendingTxnIndex), id);
         GetResponse getResponse = client.get(getRequest, RequestOptions.DEFAULT);
         if (getResponse.isExists()) {
             String sourceAsString = getResponse.getSourceAsString();
@@ -132,7 +155,7 @@ public class TransactionService {
     }
 
     public Result<Transfer> getRangeTransfers(String network, String typeTag, String receiver, String sender, int page, int count) {
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSFER_INDEX));
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.TRANSFER_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         //page size
         searchSourceBuilder.size(count);
@@ -171,8 +194,41 @@ public class TransactionService {
         return ServiceUtils.getSearchResult(searchResponse, Transfer.class);
     }
 
+    public Result<TokenTransfer> getTransferCount(String network, String typeTag) {
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.TRANSFER_INDEX));
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.size(0);
+        searchSourceBuilder.from(0);
+        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+        if (typeTag != null && typeTag.length() > 0) {
+            boolQueryBuilder.must(QueryBuilders.matchQuery("type_tag", typeTag));
+        }
+        searchSourceBuilder.aggregation(AggregationBuilders.count("token_count").field("type_tag.keyword"));
+        searchSourceBuilder.query(boolQueryBuilder);
+        searchRequest.source(searchSourceBuilder);
+
+        searchSourceBuilder.trackTotalHits(true);
+        SearchResponse searchResponse;
+        TokenTransfer tokenTransfer = new TokenTransfer();
+        Result<TokenTransfer> result = new Result<>();
+        try {
+            searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+            Map<String, Aggregation> aggMap = searchResponse.getAggregations().asMap();
+            Aggregation aggregation = aggMap.get("token_count");
+            if (aggregation instanceof ParsedValueCount) {
+                tokenTransfer.setTransfers(((ParsedValueCount) aggregation).getValue());
+                tokenTransfer.setTypeTag(typeTag);
+                result.setContents(Collections.singletonList(tokenTransfer));
+            }
+        } catch (IOException e) {
+            logger.error("get transfer error:", e);
+            return Result.EmptyResult;
+        }
+        return result;
+    }
+
     public Result<TransactionWithEvent> getRangeByAddress(String network, String address, int page, int count) throws IOException {
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_INDEX));
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.TRANSACTION_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.size(count);
         //begin offset
@@ -192,7 +248,7 @@ public class TransactionService {
     }
 
     public Result<Event> getProposalEvents(String network, String eventAddress) throws IOException {
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_EVENT_INDEX));
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.TRANSACTION_EVENT_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.size(ELASTICSEARCH_MAX_HITS);
         searchSourceBuilder.from(0);
@@ -233,7 +289,7 @@ public class TransactionService {
     }
 
     public Result<Event> getEventsByAddress(String network, String address, int page, int count) throws IOException {
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_EVENT_INDEX));
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.TRANSACTION_EVENT_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.size(count);
         //begin offset
@@ -265,7 +321,7 @@ public class TransactionService {
         if (total == 0) {
             return Result.EmptyResult;
         }
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_INDEX));
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.TRANSACTION_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.size(count);
 
@@ -291,7 +347,7 @@ public class TransactionService {
     }
 
     public Result<TransactionWithEvent> getByBlockHash(String network, String blockHash) throws IOException {
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_INDEX));
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.TRANSACTION_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 
         TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("block_hash", blockHash);
@@ -305,7 +361,7 @@ public class TransactionService {
     }
 
     public Result<TransactionWithEvent> getByBlockHeight(String network, int blockHeight) throws IOException {
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_INDEX));
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.TRANSACTION_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 
         TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("block_number", blockHeight);
@@ -336,7 +392,7 @@ public class TransactionService {
     }
 
     public Result<Event> getEventsByTransaction(String network, List<String> txnHashes) throws IOException {
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_EVENT_INDEX));
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.TRANSACTION_EVENT_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.size(ELASTICSEARCH_MAX_HITS);
         //begin offset
@@ -356,7 +412,7 @@ public class TransactionService {
 
 
     public Result<Event> getEvents(String network, String tag_name, int page, int count) throws IOException {
-        SearchRequest searchRequest = new SearchRequest(ServiceUtils.getIndex(network, Constant.TRANSACTION_EVENT_INDEX));
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.TRANSACTION_EVENT_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.size(count);
         //begin offset
