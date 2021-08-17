@@ -92,7 +92,7 @@ public class BlockService extends BaseService {
     }
 
     public Result<Block> getRange(String network, int page, int count, int start_height) {
-        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.BLOCK_INDEX));
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.BLOCK_IDS_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.matchAllQuery());
         //page size
