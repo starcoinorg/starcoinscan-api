@@ -37,9 +37,17 @@ public class BlockV2Controller {
     @ApiOperation("get block list")
     @GetMapping("/{network}/page/{page}")
     public Result<Block> getRangeBlocks(@PathVariable("network") String network, @PathVariable("page") int page,
-                                        @RequestParam(value = "count", required = false, defaultValue = "20") int count,
-                                        @RequestParam(value = "total", required = false, defaultValue = "0") int start_height) {
-        return blockService.getRange(network, page, count, start_height);
+                                        @RequestParam(value = "count", required = false, defaultValue = "20") int count
+                                        ) {
+        return blockService.getRange(network, page, count,0);
+    }
+    @ApiOperation("get block list by start height")
+    @GetMapping("/{network}/start_height/{start_height}")
+    public Result<Block> getBlocksStartWith(@PathVariable("network") String network, @PathVariable("start_height") long start_height,
+                                            @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+                                        @RequestParam(value = "count", required = false, defaultValue = "20") int count
+    ) {
+        return blockService.getBlocksStartWith(network, start_height, page, count);
     }
 
     @ApiOperation("get uncle block list")

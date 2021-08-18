@@ -41,6 +41,14 @@ public class TransactionV2Controller {
                                                              @RequestParam(value = "txn_type", required = false, defaultValue = "1") int txnType) throws Exception {
         return transactionService.getRange(network, page, count, startHeight, txnType);
     }
+    @ApiOperation("get transaction list by start time")
+    @GetMapping("/{network}/start_time/{start_time}")
+    public Result<TransactionWithEvent> getByStartTime(@PathVariable("network") String network, @PathVariable(value = "start_time") long start_time,
+                                                             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+                                                             @RequestParam(value = "count", required = false, defaultValue = "20") int count,
+                                                             @RequestParam(value = "txn_type", required = false, defaultValue = "1") int txnType) throws Exception {
+        return transactionService.getTxnByStartTime(network, start_time, page, count, txnType);
+    }
 
     @ApiOperation("get pending transaction list")
     @GetMapping("/pending_txns/{network}/page/{page}")

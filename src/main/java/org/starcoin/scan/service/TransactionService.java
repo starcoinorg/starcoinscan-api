@@ -116,6 +116,34 @@ public class TransactionService extends BaseService {
         return ServiceUtils.getSearchResult(searchResponse, TransactionWithEvent.class);
     }
 
+    public Result<TransactionWithEvent> getTxnByStartTime(String network, long start_time, int page, int count, int txnType) throws IOException {
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.TRANSACTION_INDEX));
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        if (txnType == 0)//
+            searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+        else
+            searchSourceBuilder.query(QueryBuilders.rangeQuery("transaction_index").gt(0));
+        searchSourceBuilder.query(QueryBuilders.rangeQuery("timestamp").lt(start_time));
+        //page size
+        searchSourceBuilder.size(count);
+        //begin offset
+        int offset = 0;
+        if (page > 1) {
+            offset = (page - 1) * count;
+            if (offset >= ELASTICSEARCH_MAX_HITS) {
+                searchSourceBuilder.searchAfter(new Object[]{offset});
+            } else {
+                searchSourceBuilder.from(offset);
+            }
+        }
+        searchSourceBuilder.from(offset);
+        searchSourceBuilder.sort("timestamp", SortOrder.DESC);
+        searchRequest.source(searchSourceBuilder);
+        searchSourceBuilder.trackTotalHits(true);
+        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        return ServiceUtils.getSearchResult(searchResponse, TransactionWithEvent.class);
+    }
+
     public Result<PendingTransaction> getRangePendingTransaction(String network, int page, int count, int start_height) throws IOException {
         SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.PendingTxnIndex));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();

@@ -121,6 +121,35 @@ public class BlockService extends BaseService {
         return ServiceUtils.getSearchResult(searchResponse, Block.class);
     }
 
+    public Result<Block> getBlocksStartWith(String network, long start_height, int page, int count) {
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.BLOCK_IDS_INDEX));
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.query(QueryBuilders.rangeQuery("header.number").lt(start_height));
+        //page size
+        searchSourceBuilder.size(count);
+        //begin offset
+        int offset;
+        if (page > 1) {
+            offset = (page - 1) * count;
+            if (offset >= ELASTICSEARCH_MAX_HITS) {
+                searchSourceBuilder.searchAfter(new Object[]{offset});
+            } else {
+                searchSourceBuilder.from(offset);
+            }
+        }
+        searchSourceBuilder.sort("header.number", SortOrder.DESC);
+        searchSourceBuilder.trackTotalHits(true);
+        searchRequest.source(searchSourceBuilder);
+        SearchResponse searchResponse;
+        try {
+            searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            logger.error("get range block error:", e);
+            return null;
+        }
+        return ServiceUtils.getSearchResult(searchResponse, Block.class);
+    }
+
     public UncleBlock getUncleBlockByHeight(String network, long height) {
         SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.UNCLE_BLOCK_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
