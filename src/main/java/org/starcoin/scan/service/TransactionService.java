@@ -343,8 +343,9 @@ public class TransactionService extends BaseService {
     }
 
     public Result<TransactionWithEvent> getRangeByAddressAll(String network, String address, int page, int count) throws IOException {
-        Result<Event> events = getEventsByAddress(network, address, page, count);
-        Result<Event> proposalEvents = getProposalEvents(network, address);
+        String queryAddress = address.toLowerCase();
+        Result<Event> events = getEventsByAddress(network, queryAddress, page, count);
+        Result<Event> proposalEvents = getProposalEvents(network, queryAddress);
         long total = events.getTotal() + proposalEvents.getTotal();
         if (total == 0) {
             return Result.EmptyResult;
