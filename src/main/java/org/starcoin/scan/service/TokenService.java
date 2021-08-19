@@ -16,6 +16,7 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.aggregations.metrics.ParsedSum;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -311,6 +312,7 @@ public class TokenService extends BaseService {
         TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("type_tag.keyword", tokenType);
 
         searchSourceBuilder.query(termQueryBuilder);
+        searchSourceBuilder.sort("amount", SortOrder.DESC);
         searchRequest.source(searchSourceBuilder);
         searchSourceBuilder.trackTotalHits(true);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
