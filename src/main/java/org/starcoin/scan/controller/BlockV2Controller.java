@@ -42,8 +42,8 @@ public class BlockV2Controller {
         return blockService.getRange(network, page, count,0);
     }
     @ApiOperation("get block list by start height")
-    @GetMapping("/{network}/start_height/{start_height}")
-    public Result<Block> getBlocksStartWith(@PathVariable("network") String network, @PathVariable("start_height") long start_height,
+    @GetMapping("/{network}/start_height/")
+    public Result<Block> getBlocksStartWith(@PathVariable("network") String network, @RequestParam(value = "start_height", required = false, defaultValue = "0") long start_height,
                                             @RequestParam(value = "page", required = false, defaultValue = "1") int page,
                                         @RequestParam(value = "count", required = false, defaultValue = "20") int count
     ) {
