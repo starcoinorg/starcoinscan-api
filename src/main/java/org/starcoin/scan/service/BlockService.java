@@ -124,7 +124,12 @@ public class BlockService extends BaseService {
     public Result<Block> getBlocksStartWith(String network, long start_height, int page, int count) {
         SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.BLOCK_IDS_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(QueryBuilders.rangeQuery("header.number").lt(start_height));
+        if( start_height == 0) {
+            searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+        }else {
+            searchSourceBuilder.query(QueryBuilders.rangeQuery("header.number").lt(start_height));
+        }
+
         //page size
         searchSourceBuilder.size(count);
         //begin offset

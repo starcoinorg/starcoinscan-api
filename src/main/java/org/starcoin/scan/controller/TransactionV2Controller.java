@@ -42,8 +42,8 @@ public class TransactionV2Controller {
         return transactionService.getRange(network, page, count, startHeight, txnType);
     }
     @ApiOperation("get transaction list by start time")
-    @GetMapping("/{network}/start_time/{start_time}")
-    public Result<TransactionWithEvent> getByStartTime(@PathVariable("network") String network, @PathVariable(value = "start_time") long start_time,
+    @GetMapping("/{network}/start_time/")
+    public Result<TransactionWithEvent> getByStartTime(@PathVariable("network") String network, @RequestParam(value = "start_time", required = false, defaultValue = "0") long start_time,
                                                              @RequestParam(value = "page", required = false, defaultValue = "1") int page,
                                                              @RequestParam(value = "count", required = false, defaultValue = "20") int count,
                                                              @RequestParam(value = "txn_type", required = false, defaultValue = "1") int txnType) throws Exception {

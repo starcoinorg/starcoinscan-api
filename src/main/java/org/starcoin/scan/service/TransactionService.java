@@ -123,7 +123,10 @@ public class TransactionService extends BaseService {
             searchSourceBuilder.query(QueryBuilders.matchAllQuery());
         else
             searchSourceBuilder.query(QueryBuilders.rangeQuery("transaction_index").gt(0));
-        searchSourceBuilder.query(QueryBuilders.rangeQuery("timestamp").lt(start_time));
+        if(start_time > 0) //default = 0
+        {
+            searchSourceBuilder.query(QueryBuilders.rangeQuery("timestamp").lt(start_time));
+        }
         //page size
         searchSourceBuilder.size(count);
         //begin offset
