@@ -28,6 +28,7 @@ import org.starcoin.scan.bean.TokenTransfer;
 import org.starcoin.scan.constant.Constant;
 import org.starcoin.types.AccountAddress;
 import org.starcoin.types.event.ProposalCreatedEvent;
+import org.starcoin.utils.AccountAddressUtils;
 
 import java.io.IOException;
 import java.util.*;
@@ -346,7 +347,12 @@ public class TransactionService extends BaseService {
     }
 
     public Result<TransactionWithEvent> getRangeByAddressAll(String network, String address, int page, int count) throws IOException {
-        String queryAddress = address.toLowerCase();
+        if(address == null || address.length() < 1){
+            return Result.EmptyResult;
+        }
+        // decode address
+        AccountAddress accountAddress = AccountAddressUtils.from_hex_literal(address);
+        String queryAddress = accountAddress.toString();
         Result<Event> events = getEventsByAddress(network, queryAddress, page, count);
         Result<Event> proposalEvents = getProposalEvents(network, queryAddress);
         long total = events.getTotal() + proposalEvents.getTotal();
