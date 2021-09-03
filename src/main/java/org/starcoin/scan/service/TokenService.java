@@ -39,6 +39,7 @@ import static org.starcoin.scan.service.ServiceUtils.ELASTICSEARCH_MAX_HITS;
 @Service
 public class TokenService extends BaseService {
     private static final Logger logger = LoggerFactory.getLogger(TokenService.class);
+    private static final String STC_TYPE_TAG = "0x00000000000000000000000000000001::STC::STC";
 
     @Autowired
     private RestHighLevelClient client;
@@ -88,8 +89,14 @@ public class TokenService extends BaseService {
         if (volumeContents.isEmpty()) {
             return volumeMap;
         }
+        String typeTag;
         for (TokenStatistic statistic : volumeContents) {
-            volumeMap.put(statistic.getTypeTag(), statistic.getVolume());
+            typeTag = statistic.getTypeTag();
+            if(typeTag.equals(STC_TYPE_TAG)) {
+                volumeMap.put(typeTag, statistic.getVolume() / 1000000000);
+            }else {
+                volumeMap.put(statistic.getTypeTag(), statistic.getVolume());
+            }
         }
         return volumeMap;
     }
@@ -157,13 +164,15 @@ public class TokenService extends BaseService {
             logger.error("get token holder error:", e);
         }
         //aggregate result
-        TokenStatistic tokenStatistic1 = new TokenStatistic();
-        tokenStatistic1 = result.getContents().get(0);
+        TokenStatistic tokenStatistic1 =  result.getContents().get(0);
         if (!result2.getContents().isEmpty()) {
             TokenStatistic tokenStatistic2 = result2.getContents().get(0);
             tokenStatistic1.setMarketCap(tokenStatistic2.getMarketCap());
         }
         tokenStatistic1.setAddressHolder(tokenStatistic3.getAddressHolder());
+        if(STC_TYPE_TAG.equals(tokenStatistic1.getTypeTag())) {
+            tokenStatistic1.setVolume(tokenStatistic1.getVolume()/1000000000);
+        }
         result.getContents().set(0, tokenStatistic1);
         return result;
     }
