@@ -15,6 +15,7 @@ import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.aggregations.metrics.ParsedSum;
+import org.elasticsearch.search.aggregations.pipeline.BucketSortPipelineAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.slf4j.Logger;
@@ -179,24 +180,16 @@ public class TokenService extends BaseService {
 
     public Result<TokenStatistic> tokenHolderList(String network, int page, int count) {
         SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.ADDRESS_INDEX));
+        int offset = (page - 1) * count;
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-
         searchSourceBuilder.query(QueryBuilders.matchAllQuery());
         TermsAggregationBuilder aggregationBuilder = AggregationBuilders.terms("holders")
                 .field("type_tag.keyword")
                 .order(BucketOrder.aggregation("address_holders", false))
-                .subAggregation(AggregationBuilders.count("address_holders").field("address.keyword"));
-        //page size
-        int offset = 0;
-        searchSourceBuilder.size(count);
-        if (page > 1) {
-            offset = (page - 1) * count;
-            if (offset >= ELASTICSEARCH_MAX_HITS) {
-                searchSourceBuilder.searchAfter(new Object[]{offset});
-            }
-        }
-        //begin offset
-        searchSourceBuilder.from(offset);
+//                .size(count)
+                .subAggregation(AggregationBuilders.count("address_holders").field("address.keyword"))
+                .subAggregation(new BucketSortPipelineAggregationBuilder("bucket_field",null).from(offset).size(count));
+
         searchSourceBuilder.aggregation(aggregationBuilder);
         searchSourceBuilder.trackTotalHits(true);
         searchRequest.source(searchSourceBuilder);
@@ -243,6 +236,7 @@ public class TokenService extends BaseService {
 
     public Result<TokenStatistic> tokenVolumeList(String network, int page, int count) {
         SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.TRANSFER_JOURNAL_INDEX));
+        int offset = (page - 1) * count;
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
         queryBuilder
@@ -252,18 +246,9 @@ public class TokenService extends BaseService {
                 .field("type_tag.keyword")
                 .order(BucketOrder.aggregation("amounts", false))
                 .subAggregation(AggregationBuilders.dateRange("date_range").field("timestamp").addRange("now/d-1d", "now/d"))
-                .subAggregation(AggregationBuilders.sum("amounts").field("amount"));
-        //page size
-        int offset = 0;
-        searchSourceBuilder.size(count);
-        if (page > 1) {
-            offset = (page - 1) * count;
-            if (offset >= ELASTICSEARCH_MAX_HITS) {
-                searchSourceBuilder.searchAfter(new Object[]{offset});
-            }
-        }
-        //begin offset
-        searchSourceBuilder.from(offset);
+                .subAggregation(AggregationBuilders.sum("amounts").field("amount"))
+                .subAggregation(new BucketSortPipelineAggregationBuilder("bucket_field",null).from(offset).size(count));;
+
         searchSourceBuilder.aggregation(aggregationBuilder);
         searchSourceBuilder.trackTotalHits(true);
         searchRequest.source(searchSourceBuilder);
@@ -284,7 +269,6 @@ public class TokenService extends BaseService {
             return Result.EmptyResult;
         }
         Result<TokenStatistic> result = new Result<>();
-        result.setTotal(searchResponse.getHits().getTotalHits().value);
         List<TokenStatistic> statistics = new ArrayList<>();
         for (Aggregation agg : aggregationList) {
             List<? extends Terms.Bucket> backets = ((Terms) agg).getBuckets();
