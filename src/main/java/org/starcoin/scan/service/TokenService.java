@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.starcoin.api.Result;
+import org.starcoin.bean.TokenInfo;
 import org.starcoin.scan.bean.TokenHolderInfo;
 import org.starcoin.scan.bean.TokenStatistic;
 import org.starcoin.scan.constant.Constant;
@@ -41,7 +42,8 @@ import static org.starcoin.scan.service.ServiceUtils.ELASTICSEARCH_MAX_HITS;
 public class TokenService extends BaseService {
     private static final Logger logger = LoggerFactory.getLogger(TokenService.class);
     private static final String STC_TYPE_TAG = "0x00000000000000000000000000000001::STC::STC";
-
+    //token cache
+    private static Map<String, Map<String, TokenInfo>> tokenCache = new HashMap<>();
     @Autowired
     private RestHighLevelClient client;
 
@@ -54,7 +56,7 @@ public class TokenService extends BaseService {
         }
         //get volume
         Result<TokenStatistic> volumes = tokenVolumeList(network, page, count);
-        Map<String, Long> volumeMap = getVolumeMap(volumes);
+        Map<String, Long> volumeMap = getVolumeMap(network, volumes);
         //get market cap
         Result<TokenStatistic> market = tokenMarketCap(network, page, count);
         Map<String, Double> marketMap = getMarketMap(market);
@@ -84,18 +86,21 @@ public class TokenService extends BaseService {
         return marketMap;
     }
 
-    private Map<String, Long> getVolumeMap(Result<TokenStatistic> volumes) {
+    private Map<String, Long> getVolumeMap(String network, Result<TokenStatistic> volumes) {
         Map<String, Long> volumeMap = new HashMap<>();
         List<TokenStatistic> volumeContents = volumes.getContents();
         if (volumeContents.isEmpty()) {
             return volumeMap;
         }
         String typeTag;
+        Map<String, TokenInfo> tokens = getTokenInfoMap(network);
         for (TokenStatistic statistic : volumeContents) {
             typeTag = statistic.getTypeTag();
-            if(typeTag.equals(STC_TYPE_TAG)) {
-                volumeMap.put(typeTag, statistic.getVolume() / 1000000000);
-            }else {
+            TokenInfo tokenInfo = tokens.get(typeTag);
+            if (tokenInfo != null) {
+                volumeMap.put(typeTag, statistic.getVolume() / tokenInfo.getScalingFactor());
+            } else {
+                logger.warn("token info not cached: {}", typeTag);
                 volumeMap.put(statistic.getTypeTag(), statistic.getVolume());
             }
         }
@@ -165,14 +170,18 @@ public class TokenService extends BaseService {
             logger.error("get token holder error:", e);
         }
         //aggregate result
-        TokenStatistic tokenStatistic1 =  result.getContents().get(0);
+        TokenStatistic tokenStatistic1 = result.getContents().get(0);
         if (!result2.getContents().isEmpty()) {
             TokenStatistic tokenStatistic2 = result2.getContents().get(0);
             tokenStatistic1.setMarketCap(tokenStatistic2.getMarketCap());
         }
         tokenStatistic1.setAddressHolder(tokenStatistic3.getAddressHolder());
-        if(STC_TYPE_TAG.equals(tokenStatistic1.getTypeTag())) {
-            tokenStatistic1.setVolume(tokenStatistic1.getVolume()/1000000000);
+        String typeTag = tokenStatistic1.getTypeTag();
+        TokenInfo tokenInfo = getTokenInfo(network, typeTag);
+        if (tokenInfo != null) {
+            tokenStatistic1.setVolume(tokenStatistic1.getVolume() / tokenInfo.getScalingFactor());
+        } else {
+            logger.warn("token info not cached: {}", typeTag);
         }
         result.getContents().set(0, tokenStatistic1);
         return result;
@@ -188,7 +197,7 @@ public class TokenService extends BaseService {
                 .order(BucketOrder.aggregation("address_holders", false))
 //                .size(count)
                 .subAggregation(AggregationBuilders.count("address_holders").field("address.keyword"))
-                .subAggregation(new BucketSortPipelineAggregationBuilder("bucket_field",null).from(offset).size(count));
+                .subAggregation(new BucketSortPipelineAggregationBuilder("bucket_field", null).from(offset).size(count));
 
         searchSourceBuilder.aggregation(aggregationBuilder);
         searchSourceBuilder.trackTotalHits(true);
@@ -240,14 +249,15 @@ public class TokenService extends BaseService {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
         queryBuilder
-                .must(QueryBuilders.rangeQuery("amount").gt(0));
+                .must(QueryBuilders.rangeQuery("amount").gt(0))
+                .must(QueryBuilders.rangeQuery("timestamp").gte("now/d-1d").lte("now/d"));
         searchSourceBuilder.query(queryBuilder);
         TermsAggregationBuilder aggregationBuilder = AggregationBuilders.terms("token_stat")
                 .field("type_tag.keyword")
                 .order(BucketOrder.aggregation("amounts", false))
-                .subAggregation(AggregationBuilders.dateRange("date_range").field("timestamp").addRange("now/d-1d", "now/d"))
                 .subAggregation(AggregationBuilders.sum("amounts").field("amount"))
-                .subAggregation(new BucketSortPipelineAggregationBuilder("bucket_field",null).from(offset).size(count));;
+                .subAggregation(new BucketSortPipelineAggregationBuilder("bucket_field", null).from(offset).size(count));
+        ;
 
         searchSourceBuilder.aggregation(aggregationBuilder);
         searchSourceBuilder.trackTotalHits(true);
@@ -261,6 +271,55 @@ public class TokenService extends BaseService {
             return null;
         }
 
+    }
+
+    public void loadTokenInfo(String network) {
+        SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.TOKEN_INFO_INDEX));
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+        searchRequest.source(searchSourceBuilder);
+        SearchResponse searchResponse;
+        try {
+            searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+            Result<TokenInfo> result = ServiceUtils.getSearchResult(searchResponse, TokenInfo.class);
+            List<TokenInfo> tokenInfoList = result.getContents();
+            Map<String, TokenInfo> tokenMap = new HashMap<>();
+            if (!tokenInfoList.isEmpty()) {
+                for (TokenInfo tokenInfo : tokenInfoList) {
+                    tokenMap.put(tokenInfo.getTokenCode(), tokenInfo);
+                }
+                tokenCache.put(network, tokenMap);
+                logger.info("load token info to cache ok: {}", tokenInfoList.size());
+            }
+        } catch (IOException e) {
+            logger.error("get token infos error:", e);
+        }
+    }
+
+    public TokenInfo getTokenInfo(String network, String tokenCode) {
+        if (!tokenCache.containsKey(network)) {
+            loadTokenInfo(network);
+        }
+        Map<String, TokenInfo> tokenMap = tokenCache.get(network);
+        if (tokenMap != null) {
+            return tokenMap.get(tokenCode);
+        } else {
+            logger.warn("network token not exist: {}", network);
+        }
+        return null;
+    }
+
+    public Map<String, TokenInfo> getTokenInfoMap(String network) {
+        if (!tokenCache.containsKey(network)) {
+            loadTokenInfo(network);
+        }
+        Map<String, TokenInfo> tokenMap = tokenCache.get(network);
+        if (tokenMap != null) {
+            return tokenMap;
+        } else {
+            logger.warn("network token not exist: {}", network);
+        }
+        return new HashMap<>();
     }
 
     private Result<TokenStatistic> searchStatistic(SearchResponse searchResponse, StatisticType statisticType) {
