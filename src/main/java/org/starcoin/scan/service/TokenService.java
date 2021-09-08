@@ -118,12 +118,12 @@ public class TokenService extends BaseService {
         BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
         queryBuilder
                 .must(QueryBuilders.rangeQuery("amount").gt(0))
+                .must(QueryBuilders.rangeQuery("timestamp").gte("now/d-1d").lte("now/d"))
                 .must(QueryBuilders.termQuery("type_tag.keyword", token));
         searchSourceBuilder.query(queryBuilder);
         TermsAggregationBuilder aggregationBuilder = AggregationBuilders.terms("token_stat")
                 .field("type_tag.keyword")
                 .order(BucketOrder.aggregation("amounts", false))
-                .subAggregation(AggregationBuilders.dateRange("date_range").field("timestamp").addRange("now/d-1d", "now/d"))
                 .subAggregation(AggregationBuilders.sum("amounts").field("amount"));
 
         searchSourceBuilder.from(0);
