@@ -374,8 +374,14 @@ public class TokenService extends BaseService {
         if (tokenStatisticResult.getContents() != null && tokenStatisticResult.getContents().size() > 0) {
             TokenStatistic tokenStatistic = tokenStatisticResult.getContents().get(0);
             BigInteger totalSupply = BigInteger.valueOf((new Double(tokenStatistic.getMarketCap())).longValue());
+            TokenInfo tokenInfo = getTokenInfo(network, tokenStatistic.getTypeTag());
             for (TokenHolderInfo info : result.getContents()) {
                 info.setSupply(totalSupply);
+                if(tokenInfo != null) {
+                    info.setHoldAmount(info.getHoldAmount().divide(new BigInteger(String.valueOf(tokenInfo.getScalingFactor()))));
+                }else {
+                    logger.warn("token info not exist: {}", tokenStatistic.getTypeTag());
+                }
             }
         }
         return result;
