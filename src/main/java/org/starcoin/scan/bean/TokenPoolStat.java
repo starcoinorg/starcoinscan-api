@@ -11,6 +11,7 @@ public class TokenPoolStat {
 
     private BigDecimal volume;
 
+    @JSONField(name = "volume_amount")
     private BigDecimal volumeAmount;
 
     private BigDecimal tvl;

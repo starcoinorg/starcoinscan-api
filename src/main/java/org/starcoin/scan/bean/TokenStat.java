@@ -1,11 +1,14 @@
 package org.starcoin.scan.bean;
 
+import com.alibaba.fastjson.annotation.JSONField;
+
 import java.math.BigDecimal;
 
 public class TokenStat {
 
     private String token;
 
+    @JSONField(name = "volume_amount")
     private BigDecimal volumeAmount;
 
     private BigDecimal volume;
