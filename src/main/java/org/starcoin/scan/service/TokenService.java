@@ -30,10 +30,7 @@ import org.starcoin.scan.constant.Constant;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static org.starcoin.scan.service.ServiceUtils.ELASTICSEARCH_MAX_HITS;
@@ -111,19 +108,19 @@ public class TokenService extends BaseService {
         if (token == null || token.length() == 0) {
             return null;
         }
-        Result<TokenStatistic> result = new Result<>();
+        Result<TokenStatistic> result1 = new Result<>();
         //get volume info
         SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.TRANSFER_JOURNAL_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
         queryBuilder
                 .must(QueryBuilders.rangeQuery("amount").gt(0))
+                .must(QueryBuilders.rangeQuery("timestamp").gte("now/d-1d").lte("now/d"))
                 .must(QueryBuilders.termQuery("type_tag.keyword", token));
         searchSourceBuilder.query(queryBuilder);
         TermsAggregationBuilder aggregationBuilder = AggregationBuilders.terms("token_stat")
                 .field("type_tag.keyword")
                 .order(BucketOrder.aggregation("amounts", false))
-                .subAggregation(AggregationBuilders.dateRange("date_range").field("timestamp").addRange("now/d-1d", "now/d"))
                 .subAggregation(AggregationBuilders.sum("amounts").field("amount"));
 
         searchSourceBuilder.from(0);
@@ -133,7 +130,7 @@ public class TokenService extends BaseService {
         searchSourceBuilder.timeout(new TimeValue(20, TimeUnit.SECONDS));
 
         try {
-            result = searchStatistic(client.search(searchRequest, RequestOptions.DEFAULT), StatisticType.Volumes);
+            result1 = searchStatistic(client.search(searchRequest, RequestOptions.DEFAULT), StatisticType.Volumes);
         } catch (IOException e) {
             logger.error("get token volume error:", e);
         }
@@ -170,20 +167,24 @@ public class TokenService extends BaseService {
             logger.error("get token holder error:", e);
         }
         //aggregate result
-        TokenStatistic tokenStatistic1 = result.getContents().get(0);
+        TokenStatistic tokenStatistic = new TokenStatistic();
+        tokenStatistic.setTypeTag(token);
+        if(!result1.getContents().isEmpty()) {
+            tokenStatistic = result1.getContents().get(0);
+            TokenInfo tokenInfo = getTokenInfo(network, token);
+            if (tokenInfo != null) {
+                tokenStatistic.setVolume(tokenStatistic.getVolume() / tokenInfo.getScalingFactor());
+            } else {
+                logger.warn("token info not cached: {}", token);
+            }
+        }
         if (!result2.getContents().isEmpty()) {
             TokenStatistic tokenStatistic2 = result2.getContents().get(0);
-            tokenStatistic1.setMarketCap(tokenStatistic2.getMarketCap());
+            tokenStatistic.setMarketCap(tokenStatistic2.getMarketCap());
         }
-        tokenStatistic1.setAddressHolder(tokenStatistic3.getAddressHolder());
-        String typeTag = tokenStatistic1.getTypeTag();
-        TokenInfo tokenInfo = getTokenInfo(network, typeTag);
-        if (tokenInfo != null) {
-            tokenStatistic1.setVolume(tokenStatistic1.getVolume() / tokenInfo.getScalingFactor());
-        } else {
-            logger.warn("token info not cached: {}", typeTag);
-        }
-        result.getContents().set(0, tokenStatistic1);
+        tokenStatistic.setAddressHolder(tokenStatistic3.getAddressHolder());
+        Result<TokenStatistic> result = new Result<>();
+        result.setContents(Collections.singletonList(tokenStatistic));
         return result;
     }
 
@@ -374,8 +375,14 @@ public class TokenService extends BaseService {
         if (tokenStatisticResult.getContents() != null && tokenStatisticResult.getContents().size() > 0) {
             TokenStatistic tokenStatistic = tokenStatisticResult.getContents().get(0);
             BigInteger totalSupply = BigInteger.valueOf((new Double(tokenStatistic.getMarketCap())).longValue());
+            TokenInfo tokenInfo = getTokenInfo(network, tokenStatistic.getTypeTag());
             for (TokenHolderInfo info : result.getContents()) {
                 info.setSupply(totalSupply);
+                if(tokenInfo != null) {
+                    info.setHoldAmount(info.getHoldAmount().divide(new BigInteger(String.valueOf(tokenInfo.getScalingFactor()))));
+                }else {
+                    logger.warn("token info not exist: {}", tokenStatistic.getTypeTag());
+                }
             }
         }
         return result;
