@@ -3,7 +3,7 @@ package org.starcoin.scan.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.starcoin.api.Result;
-import org.starcoin.bean.Transaction;
+import org.starcoin.scan.bean.SwapStat;
 import org.starcoin.scan.bean.TokenPair;
 import org.starcoin.scan.bean.TokenPoolStat;
 import org.starcoin.scan.bean.TokenStat;
@@ -11,6 +11,7 @@ import org.starcoin.scan.bean.TokenStat;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -40,6 +41,19 @@ public class SwapService {
         Result<TokenPoolStat> tokenStatResult = new Result<>();
         tokenStatResult.setContents(tokenStats);
         tokenStatResult.setTotal(tokenStats.size());
+        return tokenStatResult;
+    }
+
+    public Result<SwapStat> getSwapStatList(String network, Date startDate, Date endDate){
+        List<SwapStat> swapStats = new ArrayList<>();
+        swapStats.add(new SwapStat(new Date(2021,9,10),BigDecimal.ZERO,BigDecimal.ZERO));
+        swapStats.add(new SwapStat(new Date(2021,9,11),BigDecimal.ZERO,BigDecimal.ZERO));
+        swapStats.add(new SwapStat(new Date(2021,9,12),BigDecimal.ZERO,BigDecimal.ZERO));
+
+        Result<SwapStat> tokenStatResult = new Result<>();
+        tokenStatResult.setContents(swapStats);
+        tokenStatResult.setTotal(swapStats.size());
+
         return tokenStatResult;
     }
 }

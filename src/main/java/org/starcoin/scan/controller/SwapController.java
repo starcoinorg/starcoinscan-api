@@ -5,12 +5,14 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.starcoin.api.Result;
+import org.starcoin.scan.bean.SwapStat;
 import org.starcoin.scan.bean.TokenPoolStat;
 import org.starcoin.scan.bean.TokenStat;
 import org.starcoin.scan.service.SwapService;
 import org.starcoin.scan.service.TransactionWithEvent;
 
 import java.io.IOException;
+import java.util.Date;
 
 @Api(tags = "swap")
 @RestController
@@ -41,6 +43,13 @@ public class SwapController {
     public Result<TokenPoolStat> getTokenPoolStatList(@PathVariable("network") String network, @PathVariable("page") int page,
                                                       @RequestParam(value = "count", required = false, defaultValue = "20") int count){
         return swapService.getTokenPoolStatList(network,page,count);
+    }
+
+    @ApiOperation("get swap stat list")
+    @GetMapping("/swap_stats/{network}/page/{page}")
+    public Result<SwapStat> getSwapStatList(@PathVariable("network") String network, @RequestParam(value = "start_date", required = false) Date startDate,
+                                            @RequestParam(value = "end_date", required = false) Date endDate){
+        return swapService.getSwapStatList(network,startDate,endDate);
     }
 }
 
