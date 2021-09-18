@@ -278,6 +278,7 @@ public class TokenService extends BaseService {
         SearchRequest searchRequest = new SearchRequest(getIndex(network, Constant.TOKEN_INFO_INDEX));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+        searchSourceBuilder.size(1000);//token size should lgt 1000
         searchRequest.source(searchSourceBuilder);
         SearchResponse searchResponse;
         try {
