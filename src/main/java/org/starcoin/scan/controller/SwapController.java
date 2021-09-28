@@ -33,6 +33,26 @@ public class SwapController {
         return swapService.swapTransactionsList(network,count,startHeight,filterType);
     }
 
+    @ApiOperation("get swap transaction list")
+    @GetMapping("/transactions/token/{network}")
+    public List<SwapTransaction> swapTransactionsListByToken(@PathVariable("network") String network,
+                                                      @RequestParam(value = "token_name",required = true)String tokenName,
+                                                      @RequestParam(value = "count", required = false, defaultValue = "20") int count,
+                                                      @RequestParam(value = "start_height", required = false, defaultValue = "0") int startHeight,
+                                                      @RequestParam("filter_type") String filterType) throws IOException {
+        return swapService.swapTransactionsListByTokenName(network,tokenName,count,startHeight,filterType);
+    }
+
+    @ApiOperation("get swap transaction list")
+    @GetMapping("/transactions/pool/{network}")
+    public List<SwapTransaction> swapTransactionsListByPool(@PathVariable("network") String network,
+                                                            @RequestParam(value = "pool_name",required = true)String poolName,
+                                                             @RequestParam(value = "count", required = false, defaultValue = "20") int count,
+                                                             @RequestParam(value = "start_height", required = false, defaultValue = "0") int startHeight,
+                                                             @RequestParam("filter_type") String filterType) throws IOException {
+        return swapService.swapTransactionsListByPoolName(network,poolName,count,startHeight,filterType);
+    }
+
     @ApiOperation("get token stat list")
     @GetMapping("/token_stats/{network}/page/{page}")
     public Result<TokenStat> getTokenStatList(@PathVariable("network") String network, @PathVariable("page") int page,

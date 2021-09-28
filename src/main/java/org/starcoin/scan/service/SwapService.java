@@ -45,6 +45,29 @@ public class SwapService {
         }
     }
 
+    public List<SwapTransaction> swapTransactionsListByTokenName(String network,String tokenName, int count, int startId, String filterType) throws IOException {
+        if(filterType.equals("all")){
+            return swapTransactionRepository.findByTokenName(network,tokenName,startId,count);
+        }else{
+            int swapType = filterMap.get(filterType);
+            return swapTransactionRepository.findByTypeAndTokenName(network,tokenName,swapType,startId,count);
+        }
+    }
+
+    public List<SwapTransaction> swapTransactionsListByPoolName(String network,String poolName ,int count, int startId, String filterType) throws IOException {
+        String[] tokens = poolName.split("/");
+        if (tokens== null || tokens.length!=2){
+            return null;
+        }
+
+        if(filterType.equals("all")){
+            return swapTransactionRepository.findByTokenPair(network,tokens[0].trim(),tokens[1].trim(),startId,count);
+        }else{
+            int swapType = filterMap.get(filterType);
+            return swapTransactionRepository.findByTypeAndTokenPair(network,tokens[0].trim(),tokens[1].trim(),swapType,startId,count);
+        }
+    }
+
     public Result<TokenStat> getTokenStatList(String network, int page, int count){
         List<TokenStat> tokenStats = new ArrayList<>();
         TokenStat tokenStat = new TokenStat("STC", BigDecimal.ZERO,BigDecimal.ZERO,BigDecimal.ZERO);
