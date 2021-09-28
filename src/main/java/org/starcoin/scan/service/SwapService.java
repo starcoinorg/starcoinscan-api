@@ -7,6 +7,9 @@ import org.starcoin.scan.bean.SwapStat;
 import org.starcoin.scan.bean.TokenPair;
 import org.starcoin.scan.bean.TokenPoolStat;
 import org.starcoin.scan.bean.TokenStat;
+import org.starcoin.scan.repos.PoolSwapDayStatRepository;
+import org.starcoin.scan.repos.SwapTransactionRepository;
+import org.starcoin.scan.repos.TokenSwapDayStatRepository;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -19,6 +22,15 @@ public class SwapService {
 
     @Autowired
     private TransactionService transactionService;
+
+    @Autowired
+    private SwapTransactionRepository swapTransactionRepository;
+
+    @Autowired
+    private PoolSwapDayStatRepository poolSwapDayStatRepository;
+
+    @Autowired
+    private TokenSwapDayStatRepository tokenSwapDayStatRepository;
 
     public Result<TransactionWithEvent> swapTransactionsList(String network, int page, int count, int startHeight, String filterType) throws IOException {
         return transactionService.getRange(network,page,count,startHeight,0);
