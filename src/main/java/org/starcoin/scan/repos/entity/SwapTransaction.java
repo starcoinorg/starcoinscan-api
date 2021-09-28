@@ -1,40 +1,54 @@
 package org.starcoin.scan.repos.entity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import com.alibaba.fastjson.annotation.JSONField;
+
+import javax.persistence.*;
 import java.math.BigDecimal;
 
-@Table(name = "swap_transaction")
+@Table(name = "swap_transaction", indexes = {
+        @Index(name = "txn_hash_unq", columnList = "transaction_hash", unique = true)
+})
 @Entity
 public class SwapTransaction {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "swap_seq", nullable = false)
+    @JSONField(name = "swap_seq")
+    private Integer id;
+
     @Column(name = "transaction_hash", nullable = false, length = 66)
-    private String id;
+    @JSONField(name = "transaction_hash")
+    private String transactionHash;
 
     @Column(name = "total_value", precision = 131089)
+    @JSONField(name = "total_value")
     private BigDecimal totalValue;
 
     @Column(name = "token_a", nullable = false, length = 512)
+    @JSONField(name = "token_x")
     private String tokenA;
 
     @Column(name = "amount_a", nullable = false, precision = 131089)
+    @JSONField(name = "x_amount")
     private BigDecimal amountA;
 
     @Column(name = "token_b", nullable = false, length = 512)
+    @JSONField(name = "token_y")
     private String tokenB;
 
     @Column(name = "amount_b", nullable = false, precision = 131089)
+    @JSONField(name = "y_amount")
     private BigDecimal amountB;
 
     @Column(name = "account", nullable = false, length = 34)
+    @JSONField(name = "account")
     private String account;
 
     @Column(name = "ts", nullable = false)
     private Long ts;
 
     @Column(name = "swap_type", nullable = false)
+    @JSONField(name = "swap_type")
     private Integer swapType;
 
     public Integer getSwapType() {
@@ -101,11 +115,19 @@ public class SwapTransaction {
         this.totalValue = totalValue;
     }
 
-    public String getId() {
+    public String getTransactionHash() {
+        return transactionHash;
+    }
+
+    public void setTransactionHash(String transactionHash) {
+        this.transactionHash = transactionHash;
+    }
+
+    public Integer getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 }

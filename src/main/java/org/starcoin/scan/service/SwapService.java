@@ -10,15 +10,19 @@ import org.starcoin.scan.bean.TokenStat;
 import org.starcoin.scan.repos.PoolSwapDayStatRepository;
 import org.starcoin.scan.repos.SwapTransactionRepository;
 import org.starcoin.scan.repos.TokenSwapDayStatRepository;
+import org.starcoin.scan.repos.entity.SwapTransaction;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class SwapService {
+
+    private static final Map<String,Integer> filterMap = new HashMap<String,Integer>(){{
+        put("remove", 1);
+        put("add",2);
+    }};;
 
     @Autowired
     private TransactionService transactionService;
@@ -32,8 +36,13 @@ public class SwapService {
     @Autowired
     private TokenSwapDayStatRepository tokenSwapDayStatRepository;
 
-    public Result<TransactionWithEvent> swapTransactionsList(String network, int page, int count, int startHeight, String filterType) throws IOException {
-        return transactionService.getRange(network,page,count,startHeight,0);
+    public List<SwapTransaction> swapTransactionsList(String network, int count, int startId, String filterType) throws IOException {
+        if(filterType.equals("all")){
+            return swapTransactionRepository.find(network,startId,count);
+        }else{
+            int swapType = filterMap.get(filterType);
+            return swapTransactionRepository.findByType(network,swapType,startId,count);
+        }
     }
 
     public Result<TokenStat> getTokenStatList(String network, int page, int count){

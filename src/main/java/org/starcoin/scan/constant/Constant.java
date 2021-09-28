@@ -12,4 +12,6 @@ public final class Constant {
     public static final String TRANSFER_JOURNAL_INDEX = "transfer_journal";
     public static final String MARKET_CAP_INDEX = "market_cap";
     public static final String TOKEN_INFO_INDEX = "token_info";
+
+    public static final int MAX_SEQ = 2147483647;
 }
