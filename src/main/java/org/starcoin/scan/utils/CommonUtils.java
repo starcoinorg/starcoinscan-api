@@ -1,6 +1,7 @@
 package org.starcoin.scan.utils;
 
 import org.apache.commons.text.StringEscapeUtils;
+import org.springframework.data.domain.Pageable;
 
 public class CommonUtils {
 
@@ -35,5 +36,17 @@ public class CommonUtils {
         result = result.replace("\"{\"struct", "{\"struct");
         result = result.replace("}}\"", "}}");
         return result;
+    }
+
+    public static Pageable generatePageable(int page,int count){
+        return null;
+    }
+
+    public static int getOffset(int page,int count){
+        if (page >0  ){
+            int offset = (page-1)*count;
+            return offset;
+        }
+        return 0;
     }
 }

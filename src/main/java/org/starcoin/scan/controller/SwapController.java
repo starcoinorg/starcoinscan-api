@@ -8,7 +8,10 @@ import org.starcoin.api.Result;
 import org.starcoin.scan.bean.SwapStat;
 import org.starcoin.scan.bean.TokenPoolStat;
 import org.starcoin.scan.bean.TokenStat;
+import org.starcoin.scan.repos.entity.PoolSwapDayStat;
+import org.starcoin.scan.repos.entity.SwapDayStat;
 import org.starcoin.scan.repos.entity.SwapTransaction;
+import org.starcoin.scan.repos.entity.TokenSwapDayStat;
 import org.starcoin.scan.service.SwapService;
 import org.starcoin.scan.service.TransactionWithEvent;
 
@@ -55,23 +58,45 @@ public class SwapController {
 
     @ApiOperation("get token stat list")
     @GetMapping("/token_stats/{network}/page/{page}")
-    public Result<TokenStat> getTokenStatList(@PathVariable("network") String network, @PathVariable("page") int page,
-                                              @RequestParam(value = "count", required = false, defaultValue = "20") int count){
+    public List<TokenSwapDayStat> getTokenStatList(@PathVariable("network") String network, @PathVariable("page") int page,
+                                                     @RequestParam(value = "count", required = false, defaultValue = "20") int count){
         return swapService.getTokenStatList(network,page,count);
     }
 
+    @ApiOperation("get token stat by token name")
+    @GetMapping("/token_stats/{network}/{token_name}")
+    public TokenSwapDayStat getTokenStat(@PathVariable("network") String network, @PathVariable("token_name")String  tokenName){
+        return swapService.getTokenStat(network,tokenName);
+    }
+
+
     @ApiOperation("get token pool stat list")
     @GetMapping("/token_pool_stats/{network}/page/{page}")
-    public Result<TokenPoolStat> getTokenPoolStatList(@PathVariable("network") String network, @PathVariable("page") int page,
-                                                      @RequestParam(value = "count", required = false, defaultValue = "20") int count){
+    public List<PoolSwapDayStat> getTokenPoolStatList(@PathVariable("network") String network, @PathVariable("page") int page,
+                                                        @RequestParam(value = "count", required = false, defaultValue = "20") int count){
         return swapService.getTokenPoolStatList(network,page,count);
+    }
+
+    @ApiOperation("get token pool stat list by token name")
+    @GetMapping("/token_pool_stats/{network}/{token_name}/page/{page}")
+    public List<PoolSwapDayStat> getTokenPoolStatListByTokenName(@PathVariable("network") String network, @PathVariable("token_name")String  tokenName,
+                                                                 @PathVariable("page") int page,
+                                                      @RequestParam(value = "count", required = false, defaultValue = "20") int count){
+        return swapService.getTokenPoolStatListByTokenName(network,tokenName,page,count);
+    }
+
+    @ApiOperation("get token pool stat by name")
+    @GetMapping("/token_pool_stats/{network}/{pool_name}")
+    public PoolSwapDayStat getTokenPoolStat(@PathVariable("network") String network,
+                                            @PathVariable("pool_name")String  poolName){
+        return swapService.getTokenPoolStat(network,poolName);
     }
 
     @ApiOperation("get swap stat list")
     @GetMapping("/swap_stats/{network}/page/{page}")
-    public Result<SwapStat> getSwapStatList(@PathVariable("network") String network, @RequestParam(value = "start_date", required = false) Date startDate,
-                                            @RequestParam(value = "end_date", required = false) Date endDate){
-        return swapService.getSwapStatList(network,startDate,endDate);
+    public List<SwapDayStat> getSwapStatList(@PathVariable("network") String network, @PathVariable("page") int page,
+                                             @RequestParam(value = "count", required = false, defaultValue = "20") int count){
+        return swapService.getSwapStatList(network,page,count);
     }
 }
 

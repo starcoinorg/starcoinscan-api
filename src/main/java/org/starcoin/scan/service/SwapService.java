@@ -4,13 +4,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.starcoin.api.Result;
 import org.starcoin.scan.bean.SwapStat;
-import org.starcoin.scan.bean.TokenPair;
-import org.starcoin.scan.bean.TokenPoolStat;
-import org.starcoin.scan.bean.TokenStat;
 import org.starcoin.scan.repos.PoolSwapDayStatRepository;
+import org.starcoin.scan.repos.SwapDayStatRepository;
 import org.starcoin.scan.repos.SwapTransactionRepository;
 import org.starcoin.scan.repos.TokenSwapDayStatRepository;
+import org.starcoin.scan.repos.entity.PoolSwapDayStat;
+import org.starcoin.scan.repos.entity.SwapDayStat;
 import org.starcoin.scan.repos.entity.SwapTransaction;
+import org.starcoin.scan.repos.entity.TokenSwapDayStat;
+import org.starcoin.scan.utils.CommonUtils;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -25,9 +27,6 @@ public class SwapService {
     }};;
 
     @Autowired
-    private TransactionService transactionService;
-
-    @Autowired
     private SwapTransactionRepository swapTransactionRepository;
 
     @Autowired
@@ -35,6 +34,9 @@ public class SwapService {
 
     @Autowired
     private TokenSwapDayStatRepository tokenSwapDayStatRepository;
+
+    @Autowired
+    private SwapDayStatRepository swapDayStatRepository;
 
     public List<SwapTransaction> swapTransactionsList(String network, int count, int startId, String filterType) throws IOException {
         if(filterType.equals("all")){
@@ -68,36 +70,32 @@ public class SwapService {
         }
     }
 
-    public Result<TokenStat> getTokenStatList(String network, int page, int count){
-        List<TokenStat> tokenStats = new ArrayList<>();
-        TokenStat tokenStat = new TokenStat("STC", BigDecimal.ZERO,BigDecimal.ZERO,BigDecimal.ZERO);
-        tokenStats.add(tokenStat);
-        Result<TokenStat> tokenStatResult = new Result<>();
-        tokenStatResult.setContents(tokenStats);
-        tokenStatResult.setTotal(tokenStats.size());
-        return tokenStatResult;
+    public List<TokenSwapDayStat> getTokenStatList(String network, int page, int count){
+        return tokenSwapDayStatRepository.findAll(CommonUtils.getOffset(page,count),count,network);
     }
 
-    public Result<TokenPoolStat> getTokenPoolStatList(String network, int page, int count){
-        List<TokenPoolStat> tokenStats = new ArrayList<>();
-        TokenPoolStat tokenStat = new TokenPoolStat(new TokenPair("STC","USDT"), BigDecimal.ZERO,BigDecimal.ZERO,BigDecimal.ZERO);
-        tokenStats.add(tokenStat);
-        Result<TokenPoolStat> tokenStatResult = new Result<>();
-        tokenStatResult.setContents(tokenStats);
-        tokenStatResult.setTotal(tokenStats.size());
-        return tokenStatResult;
+    public List<PoolSwapDayStat> getTokenPoolStatList(String network, int page, int count){
+        return poolSwapDayStatRepository.findAll(CommonUtils.getOffset(page,count),count,network);
     }
 
-    public Result<SwapStat> getSwapStatList(String network, Date startDate, Date endDate){
-        List<SwapStat> swapStats = new ArrayList<>();
-        swapStats.add(new SwapStat(new Date(2021,9,10),BigDecimal.ZERO,BigDecimal.ZERO));
-        swapStats.add(new SwapStat(new Date(2021,9,11),BigDecimal.ZERO,BigDecimal.ZERO));
-        swapStats.add(new SwapStat(new Date(2021,9,12),BigDecimal.ZERO,BigDecimal.ZERO));
+    public List<SwapDayStat> getSwapStatList(String network, int page, int count){
+        return swapDayStatRepository.findAll(CommonUtils.getOffset(page,count),count,network);
+    }
 
-        Result<SwapStat> tokenStatResult = new Result<>();
-        tokenStatResult.setContents(swapStats);
-        tokenStatResult.setTotal(swapStats.size());
+    public PoolSwapDayStat getTokenPoolStat(String network, String poolName) {
+        String[] tokens = poolName.split("/");
+        if(tokens== null || tokens.length!=2){
+            return null;
+        }
 
-        return tokenStatResult;
+        return poolSwapDayStatRepository.find(network,tokens[0].trim(),tokens[1].trim());
+    }
+
+    public TokenSwapDayStat getTokenStat(String network, String tokenName) {
+        return tokenSwapDayStatRepository.find(network,tokenName);
+    }
+
+    public List<PoolSwapDayStat> getTokenPoolStatListByTokenName(String network, String tokenName, int page, int count) {
+        return poolSwapDayStatRepository.findAll(CommonUtils.getOffset(page,count),count,network,tokenName);
     }
 }
